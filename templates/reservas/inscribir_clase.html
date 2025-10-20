@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Inscribir a {{ clase.nombre }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container py-5">
+  <div class="col-lg-6 mx-auto card shadow p-4">
+    <h3 class="mb-3">Inscribir socio en: {{ clase.nombre }} ({{ clase.fecha|date:"d/m/Y" }} {{ clase.hora_inicio }}-{{ clase.hora_fin }})</h3>
+    <p class="mb-3">Cupos: {{ clase.cupos }} | Inscritos: {{ clase.inscritos_count }}</p>
+    <form method="POST">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label">Socio</label>
+        <select name="socio" class="form-select" required>
+          <option value="">Seleccione...</option>
+          {% for s in socios %}
+            <option value="{{ s.id }}">{{ s.nombre }} {{ s.apellido_paterno }} - {{ s.rut }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="text-end">
+        <a class="btn btn-secondary" href="{% url 'clases_list' %}">Volver</a>
+        <button class="btn btn-success" type="submit">Inscribir</button>
+      </div>
+    </form>
+  </div>
+</div>
+</body>
+</html>

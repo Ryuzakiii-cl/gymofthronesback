@@ -1,0 +1,8 @@
+{% extends 'users/base_dashboard.html' %}
+{% block title %}Panel Socio{% endblock %}
+
+{% block content %}
+  <h1 class="mb-3">Panel Socio</h1>
+  <p>Bienvenido {{ request.user.nombre }} {{ request.user.apellido }}👋</p>
+  <p>Aquí podrás gestionar tus clases y reservas.</p>
+{% endblock %}
