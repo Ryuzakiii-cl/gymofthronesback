@@ -1,4 +1,4 @@
-from datetime import datetime, time
+from datetime import datetime, timedelta
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse, HttpResponseBadRequest
@@ -10,7 +10,9 @@ from apps.clientes.models import Socio
 from apps.planes.models import Plan, SocioPlan
 from .models import Clase, InscripcionClase, Cancha, Reserva
 
-# --- Permisos ---
+# ----------------------------
+# Permisos
+# ----------------------------
 def es_admin_o_superadmin(user):
     return user.is_authenticated and (getattr(user, 'rol', None) in ['admin', 'superadmin'])
 
@@ -18,14 +20,14 @@ def es_profesor(user):
     return user.is_authenticated and getattr(user, 'rol', None) == 'profesor'
 
 
-# ----------------------------
-#        CLASES (talleres)
-# ----------------------------
+# ============================
+#        CLASES (CRUD)
+# ============================
 
 @login_required
 @user_passes_test(es_admin_o_superadmin)
 def clases_list(request):
-    clases = Clase.objects.all()
+    clases = Clase.objects.all().order_by('fecha', 'hora_inicio')
     return render(request, 'reservas/clases_list.html', {'clases': clases})
 
 @login_required
@@ -105,7 +107,7 @@ def inscribir_socio_clase(request, clase_id):
             messages.error(request, '❌ No hay cupos disponibles.')
             return redirect('clases_list')
 
-        # Validar plan
+        # Validar plan (solo planes con puede_reservar_clases)
         socio_plan = SocioPlan.objects.filter(socio=socio, estado=True).order_by('-fecFin').first()
         if not socio_plan or not socio_plan.plan.puede_reservar_clases:
             messages.error(request, '❌ El socio no tiene derecho a inscribirse en clases (plan).')
@@ -124,9 +126,9 @@ def clases_profesor(request):
     return render(request, 'reservas/clases_profesor.html', {'clases': clases})
 
 
-# ----------------------------
-#       CANCHAS Y RESERVAS
-# ----------------------------
+# ============================
+#      CANCHAS & RESERVAS
+# ============================
 
 @login_required
 @user_passes_test(es_admin_o_superadmin)
@@ -169,11 +171,59 @@ def reservas_cancha_list(request):
     reservas = Reserva.objects.select_related('cancha', 'socio').all()
     return render(request, 'reservas/reservas_cancha_list.html', {'reservas': reservas})
 
+# *** Vista requerida por tus URLs: la dejamos implementada aunque uses modales ***
 @login_required
 @user_passes_test(es_admin_o_superadmin)
 def reserva_cancha_form(request, reserva_id=None):
-    # (omitido: igual que lo tenías funcionando)
-    return redirect('reservas_cancha_list')
+    """Formulario clásico de reserva (no modal). Lo mantenemos para no romper rutas existentes."""
+    socios = Socio.objects.filter(estado=True)
+    canchas = Cancha.objects.filter(activo=True)
+    reserva = get_object_or_404(Reserva, id=reserva_id) if reserva_id else None
+
+    if request.method == 'POST':
+        socio = get_object_or_404(Socio, id=request.POST.get('socio'))
+        cancha = get_object_or_404(Cancha, id=request.POST.get('cancha'))
+        fecha = request.POST.get('fecha')
+        hora_inicio = request.POST.get('hora_inicio')
+        hora_fin = request.POST.get('hora_fin')
+
+        # Validar plan (solo planes con puede_reservar_canchas)
+        socio_plan = SocioPlan.objects.filter(socio=socio, estado=True).order_by('-fecFin').first()
+        if not socio_plan or not socio_plan.plan.puede_reservar_canchas:
+            messages.error(request, '❌ El socio no tiene derecho a reservar canchas (plan).')
+            return redirect('reservas_cancha_list')
+
+        # Validar choque
+        solapa = Reserva.objects.filter(
+            cancha=cancha, fecha=fecha, estado__in=['pendiente', 'confirmada']
+        ).exclude(id=reserva.id if reserva else None).filter(
+            hora_inicio__lt=hora_fin, hora_fin__gt=hora_inicio
+        ).exists()
+        if solapa:
+            messages.error(request, '❌ Ya existe una reserva para esa cancha en ese horario.')
+            return redirect('reservas_cancha_list')
+
+        if reserva:
+            reserva.socio = socio
+            reserva.cancha = cancha
+            reserva.fecha = fecha
+            reserva.hora_inicio = hora_inicio
+            reserva.hora_fin = hora_fin
+            reserva.estado = 'confirmada'
+            reserva.save()
+            messages.success(request, '✅ Reserva actualizada.')
+        else:
+            Reserva.objects.create(
+                socio=socio, cancha=cancha, fecha=fecha,
+                hora_inicio=hora_inicio, hora_fin=hora_fin,
+                estado='confirmada'
+            )
+            messages.success(request, '✅ Reserva creada.')
+        return redirect('reservas_cancha_list')
+
+    return render(request, 'reservas/reserva_cancha_form.html', {
+        'reserva': reserva, 'socios': socios, 'canchas': canchas
+    })
 
 @login_required
 @user_passes_test(es_admin_o_superadmin)
@@ -185,42 +235,65 @@ def reserva_cancha_cancelar(request, reserva_id):
     return redirect('reservas_cancha_list')
 
 
-# ----------------------------
-#           CALENDARIOS
-# ----------------------------
+# ============================
+#          CALENDARIOS
+# ============================
 
 @login_required
-def calendario(request):
-    return render(request, 'reservas/calendario.html')  # Canchas (lo tienes operativo)
+@user_passes_test(es_admin_o_superadmin)
+def calendario_canchas(request):
+    socios = Socio.objects.filter(estado=True).order_by('nombre', 'apellido_paterno')
+    canchas = Cancha.objects.filter(activo=True).order_by('nombre')
+    return render(request, 'reservas/calendario_canchas.html', {'socios': socios, 'canchas': canchas})
 
 @login_required
 @user_passes_test(es_admin_o_superadmin)
 def calendario_clases(request):
-    profesores = Usuario.objects.filter(rol='profesor').values('id', 'nombre', 'apellido')
-    socios = Socio.objects.filter(estado=True).values('id', 'nombre', 'apellido_paterno')
+    profesores = list(Usuario.objects.filter(rol='profesor').values('id', 'nombre', 'apellido'))
+    socios = list(Socio.objects.filter(estado=True).values('id', 'nombre', 'apellido_paterno'))
     return render(request, 'reservas/calendario_clases.html', {
-        'profesores': list(profesores),
-        'socios': list(socios),
+        'profesores': profesores,
+        'socios': socios,
     })
+
+
+# ---------- JSON para FullCalendar ----------
+
+@login_required
+def eventos_canchas_json(request):
+    """Eventos del calendario de canchas."""
+    eventos = []
+    reservas = Reserva.objects.filter(estado='confirmada').select_related('cancha', 'socio')
+    for r in reservas:
+        eventos.append({
+            "title": f"{r.cancha.nombre} - {r.socio.nombre}",
+            "start": f"{r.fecha}T{r.hora_inicio}",
+            "end": f"{r.fecha}T{r.hora_fin}",
+            "color": "#ffc107"
+        })
+    return JsonResponse(eventos, safe=False)
 
 @login_required
 def eventos_clases_json(request):
+    """Eventos del calendario de clases."""
     eventos = []
-    clases = Clase.objects.filter(activo=True)
+    clases = Clase.objects.filter(activo=True).select_related('profesor')
     for c in clases:
-        inicio = f"{c.fecha}T{c.hora_inicio}"
-        fin = f"{c.fecha}T{c.hora_fin}"
         eventos.append({
             "id": c.id,
             "title": f"{c.nombre} ({c.profesor.nombre})",
-            "start": inicio,
-            "end": fin,
+            "start": f"{c.fecha}T{c.hora_inicio}",
+            "end": f"{c.fecha}T{c.hora_fin}",
+            "color": "#5A8DEE"
         })
     return JsonResponse(eventos, safe=False)
 
 
-# ---------- APIs AJAX para FullCalendar (Clases) ----------
+# ============================
+#        APIs (AJAX)
+# ============================
 
+# ---- Clases
 @login_required
 @user_passes_test(es_admin_o_superadmin)
 def api_clases(request):
@@ -313,7 +386,7 @@ def api_inscribir_socio(request, clase_id):
     if c.inscritos_count() >= c.cupos:
         return JsonResponse({'ok': False, 'msg': 'Cupos completos para esta clase.'}, status=400)
 
-    # Validar plan -> solo Caballero/Rey (planes con puede_reservar_clases = True)
+    # Validar plan
     socio_plan = SocioPlan.objects.filter(socio=socio, estado=True).order_by('-fecFin').first()
     if not socio_plan or not socio_plan.plan.puede_reservar_clases:
         return JsonResponse({'ok': False, 'msg': 'El socio no tiene derecho a inscribirse en clases (plan).'}, status=400)
@@ -346,3 +419,35 @@ def api_eliminar_inscripcion(request, insc_id):
     insc = get_object_or_404(InscripcionClase, id=insc_id)
     insc.delete()
     return JsonResponse({'ok': True})
+
+
+# ---- Canchas (AJAX creación desde modal)
+@login_required
+@user_passes_test(es_admin_o_superadmin)
+@require_POST
+def crear_reserva_ajax(request):
+    socio = get_object_or_404(Socio, id=request.POST.get('socio'))
+    cancha = get_object_or_404(Cancha, id=request.POST.get('cancha'))
+    fecha = request.POST.get('fecha')
+    hora_inicio = request.POST.get('hora_inicio')
+    hora_fin = request.POST.get('hora_fin')
+
+    # Validar plan (solo planes con puede_reservar_canchas)
+    socio_plan = SocioPlan.objects.filter(socio=socio, estado=True).order_by('-fecFin').first()
+    if not socio_plan or not socio_plan.plan.puede_reservar_canchas:
+        return JsonResponse({'status': 'error', 'message': 'El socio no puede reservar canchas con su plan.'}, status=400)
+
+    # Validar choque horario
+    solapa = Reserva.objects.filter(
+        cancha=cancha, fecha=fecha, estado__in=['pendiente', 'confirmada']
+    ).filter(
+        hora_inicio__lt=hora_fin, hora_fin__gt=hora_inicio
+    ).exists()
+    if solapa:
+        return JsonResponse({'status': 'error', 'message': 'Ya existe una reserva para esa cancha en ese horario.'}, status=400)
+
+    Reserva.objects.create(
+        socio=socio, cancha=cancha, fecha=fecha,
+        hora_inicio=hora_inicio, hora_fin=hora_fin, estado='confirmada'
+    )
+    return JsonResponse({'status': 'success', 'message': 'Reserva creada correctamente.'})

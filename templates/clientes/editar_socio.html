@@ -33,103 +33,50 @@
     </style>
 </head>
 <body>
-<div class="container py-5">
-    <div class="col-lg-10 mx-auto">
-        <div class="card shadow p-4">
-            <h2 class="text-center mb-4">Editar Socio</h2>
-            <form method="POST">
-                {% csrf_token %}
+{% extends 'users/base_dashboard.html' %}
+{% block title %}Editar Socio{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h3 class="fw-bold mb-4">✏️ Editar Socio</h3>
 
-                <!-- Sección Datos Personales -->
-                <div class="form-section mb-4">
-                    <div class="section-title">🧍 Datos del Socio</div>
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <label class="form-label">RUT</label>
-                            <input type="text" class="form-control" value="{{ socio.rut }}" disabled>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Correo</label>
-                            <input type="email" name="correo" class="form-control" value="{{ socio.correo }}" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Teléfono</label>
-                            <input type="text" name="telefono" class="form-control" value="{{ socio.telefono }}">
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label">Nombre</label>
-                            <input type="text" name="nombre" class="form-control" value="{{ socio.nombre }}" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Apellido Paterno</label>
-                            <input type="text" name="apellido_paterno" class="form-control" value="{{ socio.apellido_paterno }}" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Apellido Materno</label>
-                            <input type="text" name="apellido_materno" class="form-control" value="{{ socio.apellido_materno }}">
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label">Fecha de Nacimiento</label>
-                            <input type="date" name="fecNac" class="form-control" value="{{ socio.fecNac|date:'Y-m-d' }}">
-                        </div>
-
-                        <div class="col-md-3 mt-4">
-                            <div class="form-check">
-                                <input type="checkbox" name="estado" id="estado" class="form-check-input" {% if socio.estado %}checked{% endif %}>
-                                <label for="estado" class="form-check-label">Activo</label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Sección Plan Actual -->
-                <div class="form-section mb-4">
-                    <div class="section-title">📋 Plan Actual</div>
-                    <div class="row g-3 align-items-end">
-                        <div class="col-md-6">
-                            <label class="form-label">Plan</label>
-                            <select name="plan" id="plan" class="form-select" onchange="actualizarResumen()">
-                                {% for plan in planes %}
-                                    <option value="{{ plan.id }}" data-precio="{{ plan.precio }}" data-duracion="{{ plan.duracion }}" data-beneficios="{{ plan.beneficios }}"
-                                        {% if socio.plan_actual_obj and socio.plan_actual_obj.id == plan.id %}selected{% endif %}>
-                                        {{ plan.nombre }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Precio</label>
-                            <input type="text" id="precio" class="form-control" readonly>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Duración (días)</label>
-                            <input type="text" id="duracion" class="form-control" readonly>
-                        </div>
-                    </div>
-
-                    <div class="plan-summary mt-3" id="planResumen" style="display: none;">
-                        <strong>Detalles del Plan:</strong>
-                        <p class="mb-0" id="beneficios"></p>
-                    </div>
-                </div>
-
-                <!-- Información del Pago (solo consulta) -->
-                <div class="form-section mb-4">
-                    <div class="section-title">💳 Información de Pago</div>
-                    <p class="mb-0">Este socio ya cuenta con un método de pago registrado durante su inscripción. Si requiere un cambio o devolución, debe gestionarse en el módulo de pagos.</p>
-                </div>
-
-                <!-- Botones -->
-                <div class="text-end mt-4">
-                    <a href="{% url 'lista_socios' %}" class="btn btn-secondary">Volver</a>
-                    <button type="submit" class="btn btn-success">Guardar Cambios</button>
-                </div>
-            </form>
-        </div>
+  <form method="POST" class="card p-4 shadow-sm">
+    {% csrf_token %}
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label class="form-label">Nombre</label>
+        <input type="text" name="nombre" class="form-control" value="{{ socio.nombre }}" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Apellido Paterno</label>
+        <input type="text" name="apellido_paterno" class="form-control" value="{{ socio.apellido_paterno }}" required>
+      </div>
     </div>
+
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label class="form-label">Correo</label>
+        <input type="email" name="correo" class="form-control" value="{{ socio.correo }}" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Teléfono</label>
+        <input type="text" name="telefono" class="form-control" value="{{ socio.telefono }}">
+      </div>
+    </div>
+
+    {% if socio.plan_actual %}
+      <div class="alert alert-info mt-3">
+        <strong>Plan actual:</strong> {{ socio.plan_actual|safe }}
+      </div>
+    {% endif %}
+
+    <div class="text-end mt-3">
+      <button type="submit" class="btn btn-dark text-warning fw-bold">Guardar Cambios</button>
+      <a href="{% url 'lista_socios' %}" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+  </form>
 </div>
+{% endblock %}
+
 
 <script>
 function actualizarResumen() {

@@ -33,105 +33,79 @@
     </style>
 </head>
 <body>
-<div class="container py-5">
-    <div class="col-lg-10 mx-auto">
-        <div class="card shadow p-4">
-            <h2 class="text-center mb-4">Registrar Nuevo Socio</h2>
-            <form method="POST">
-                {% csrf_token %}
+{% extends 'users/base_dashboard.html' %}
+{% block title %}Nuevo Socio{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h3 class="fw-bold mb-4">🧾 Registrar Nuevo Socio</h3>
 
-                <!-- Sección Datos Personales -->
-                <div class="form-section mb-4">
-                    <div class="section-title">🧍 Datos del Socio</div>
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <label class="form-label">RUT</label>
-                            <input type="text" name="rut" class="form-control" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Correo</label>
-                            <input type="email" name="correo" class="form-control" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Teléfono</label>
-                            <input type="text" name="telefono" class="form-control">
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label">Nombre</label>
-                            <input type="text" name="nombre" class="form-control" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Apellido Paterno</label>
-                            <input type="text" name="apellido_paterno" class="form-control" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Apellido Materno</label>
-                            <input type="text" name="apellido_materno" class="form-control">
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label">Fecha de Nacimiento</label>
-                            <input type="date" name="fecNac" class="form-control">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Sección Plan -->
-                <div class="form-section mb-4">
-                    <div class="section-title">📋 Plan Seleccionado</div>
-                    <div class="row g-3 align-items-end">
-                        <div class="col-md-6">
-                            <label class="form-label">Plan</label>
-                            <select name="plan" id="plan" class="form-select" required onchange="actualizarResumen()">
-                                <option value="">Seleccione un plan...</option>
-                                {% for plan in planes %}
-                                <option value="{{ plan.id }}" data-precio="{{ plan.precio }}" data-duracion="{{ plan.duracion }}" data-beneficios="{{ plan.beneficios }}">
-                                    {{ plan.nombre }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Precio</label>
-                            <input type="text" id="precio" class="form-control" readonly>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Duración (días)</label>
-                            <input type="text" id="duracion" class="form-control" readonly>
-                        </div>
-                    </div>
-
-                    <div class="plan-summary mt-3" id="planResumen" style="display: none;">
-                        <strong>Detalles del Plan:</strong>
-                        <p class="mb-0" id="beneficios"></p>
-                    </div>
-                </div>
-
-                <!-- Sección Pago -->
-                <div class="form-section mb-4">
-                    <div class="section-title">💳 Método de Pago</div>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Forma de Pago</label>
-                            <select name="forma_pago" class="form-select" required>
-                                <option value="efectivo">Efectivo</option>
-                                <option value="transferencia">Transferencia</option>
-                                <option value="tarjeta">Tarjeta</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Botones -->
-                <div class="text-end mt-4">
-                    <a href="{% url 'lista_socios' %}" class="btn btn-secondary">Volver</a>
-                    <button type="submit" class="btn btn-success">Registrar Socio</button>
-                </div>
-            </form>
-        </div>
+  <form method="POST" class="card p-4 shadow-sm">
+    {% csrf_token %}
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <label class="form-label">RUT</label>
+        <input type="text" name="rut" class="form-control" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Nombre</label>
+        <input type="text" name="nombre" class="form-control" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Apellido Paterno</label>
+        <input type="text" name="apellido_paterno" class="form-control" required>
+      </div>
     </div>
+
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <label class="form-label">Apellido Materno</label>
+        <input type="text" name="apellido_materno" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Correo</label>
+        <input type="email" name="correo" class="form-control" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Teléfono</label>
+        <input type="text" name="telefono" class="form-control">
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label class="form-label">Fecha de nacimiento</label>
+        <input type="date" name="fecNac" class="form-control">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Plan</label>
+        <select name="plan" class="form-select" required>
+          <option value="">-- Seleccionar --</option>
+          {% for plan in planes %}
+            <option value="{{ plan.id }}">{{ plan.nombre }} (${{ plan.precio }})</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label class="form-label">Forma de pago</label>
+        <select name="forma_pago" class="form-select">
+          <option value="efectivo">Efectivo</option>
+          <option value="tarjeta">Tarjeta</option>
+          <option value="transferencia">Transferencia</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="text-end">
+      <button type="submit" class="btn btn-dark text-warning fw-bold">Registrar</button>
+      <a href="{% url 'lista_socios' %}" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+  </form>
 </div>
+{% endblock %}
+
 
 <script>
 function actualizarResumen() {

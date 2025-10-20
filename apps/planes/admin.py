@@ -13,7 +13,7 @@ class PlanAdmin(admin.ModelAdmin):
     list_filter = ('puede_reservar_clases', 'puede_reservar_canchas')
     search_fields = ('nombre',)
     ordering = ('nombre',)
-    inlines = [PlanBeneficioInline]  # 🔹 aquí lo integramos correctamente
+    inlines = [PlanBeneficioInline]  #aquí lo integramos correctamente
 
 
 @admin.register(PlanBeneficio)

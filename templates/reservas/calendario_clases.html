@@ -3,24 +3,13 @@
 {% block title %}Calendario de Clases{% endblock %}
 
 {% block content %}
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
-
-<style>
-  .fc { --fc-border-color: #e9ecef; }
-  .fc-toolbar-title { font-weight: 700; }
-  #calendar { min-height: 720px; background: #fff; border-radius: 10px; padding: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
-  .badge-cap { font-size: 0.85rem; background: #111; color: #ffc107; border: 1px solid #ffc107; }
-  /* Fix de modales dentro del dashboard */
-  .modal .form-label { font-weight: 600; }
-</style>
-
-<div class="container">
+<div class="container-fluid">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h3 class="fw-bold text-dark">🗓️ Calendario de Clases</h3>
-    <span class="badge badge-cap px-3 py-2">Inscribir solo Caballero/Rey • Cupos controlados</span>
+    <span class="badge px-3 py-2 text-dark border border-dark bg-warning">Inscribir Solo Planes Caballero - Rey • Cupos Limitados</span>
   </div>
 
-  <div id="calendar"></div>
+  <div id="calendar" class="bg-white p-3 rounded shadow-sm"></div>
 </div>
 
 <!-- Modal Crear Clase -->
@@ -128,47 +117,38 @@
     </div>
   </div>
 </div>
+{% endblock %}
 
-<!-- FullCalendar al final para evitar bloqueos -->
+{% block extra_js %}
+<!-- FullCalendar al final para no interferir con el dashboard -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 
 <script>
-  // Si por alguna razón FullCalendar no cargó, mostramos mensaje.
-  if (typeof FullCalendar === 'undefined') {
-    const c = document.getElementById('calendar');
-    c.innerHTML = '<div class="alert alert-danger m-3">No se pudo cargar el calendario. Revisa tu conexión o limpia la caché (Ctrl+F5).</div>';
-  }
-
-  // CSRF
-  function getCookie(name) {
-    const value = `; ${document.cookie}`.split(`; ${name}=`);
-    if (value.length === 2) return value.pop().split(';').shift();
-  }
-  const CSRF = getCookie('csrftoken');
-
-  // Datos precargados desde la vista
+document.addEventListener('DOMContentLoaded', function() {
+  const CSRF = document.querySelector('[name=csrfmiddlewaretoken]').value;
   const PROFESORES = {{ profesores|safe }};
   const SOCIOS = {{ socios|safe }};
 
-  // Llenar selects
-  document.addEventListener('DOMContentLoaded', () => {
-    const selProf = document.getElementById('selectProfesor');
-    PROFESORES.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p.id;
-      opt.textContent = `${p.nombre} ${p.apellido || ''}`.trim();
-      selProf.appendChild(opt);
-    });
-    const selSocio = document.getElementById('selectSocio');
-    SOCIOS.forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = s.id;
-      opt.textContent = `${s.nombre} ${s.apellido_paterno || ''}`.trim();
-      selSocio.appendChild(opt);
-    });
+  const selProf = document.getElementById('selectProfesor');
+  PROFESORES.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = `${p.nombre} ${p.apellido || ''}`.trim();
+    selProf.appendChild(opt);
   });
 
-  // Paleta por nombre de clase
+  const selSocio = document.getElementById('selectSocio');
+  SOCIOS.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.id;
+    opt.textContent = `${s.nombre} ${s.apellido_paterno || ''}`.trim();
+    selSocio.appendChild(opt);
+  });
+
+  const modalCrear = new bootstrap.Modal(document.getElementById('modalCrearClase'));
+  const modalDetalle = new bootstrap.Modal(document.getElementById('modalDetalleClase'));
+
   function colorPorNombre(nombre) {
     const n = (nombre || '').toLowerCase();
     if (n.includes('yoga')) return '#5A8DEE';
@@ -179,188 +159,91 @@
     return '#6c757d';
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
-    if (typeof FullCalendar === 'undefined') return;
+  const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+    initialView: 'timeGridWeek',
+    locale: 'es',
+    slotDuration: '01:00:00',
+    slotMinTime: '08:00:00',
+    slotMaxTime: '22:00:00',
+    selectable: true,
+    navLinks: true,
+    headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
+    events: async (info, success, failure) => {
+      try {
+        const res = await fetch("{% url 'api_clases' %}");
+        const data = await res.json();
+        const evs = data.clases.map(c => ({
+          id: c.id,
+          title: `${c.nombre} (${c.profesor})`,
+          start: `${c.fecha}T${c.hora_inicio}`,
+          end: `${c.fecha}T${c.hora_fin}`,
+          backgroundColor: colorPorNombre(c.nombre),
+          borderColor: colorPorNombre(c.nombre),
+        }));
+        success(evs);
+      } catch (e) { failure(e); }
+    },
+    select: (arg) => {
+      const start = new Date(arg.start); start.setMinutes(0,0,0);
+      const end = new Date(start.getTime() + 60*60*1000);
+      document.getElementById('crearFecha').value = start.toISOString().slice(0,10);
+      document.getElementById('crearHoraIni').value = String(start.toTimeString().slice(0,5));
+      document.getElementById('crearHoraFin').value = String(end.toTimeString().slice(0,5));
+      document.getElementById('crearError').classList.add('d-none');
+      modalCrear.show();
+    },
+    eventClick: async (info) => {
+      const id = info.event.id;
+      const r = await fetch(`{% url 'api_detalle_clase' 0 %}`.replace('0', id));
+      const data = await r.json();
+      if (!data.ok) return;
 
-    const modalCrear = new bootstrap.Modal(document.getElementById('modalCrearClase'));
-    const modalDetalle = new bootstrap.Modal(document.getElementById('modalDetalleClase'));
+      const c = data.clase;
+      document.getElementById('detalleTitulo').textContent = c.nombre;
+      document.getElementById('detalleProfesor').textContent = c.profesor;
+      document.getElementById('detalleFecha').textContent = c.fecha;
+      document.getElementById('detalleHorario').textContent = `${c.hora_inicio} - ${c.hora_fin}`;
+      document.getElementById('detalleCupos').textContent = c.cupos;
+      document.getElementById('detalleInsc').textContent = c.inscritos;
 
-    const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-      initialView: 'timeGridWeek',
-      locale: 'es',
-      slotDuration: '01:00:00',
-      slotMinTime: '08:00:00',
-      slotMaxTime: '22:00:00',
-      selectable: true,
-      navLinks: true,
-      headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
-      events: async (info, success, failure) => {
-        try {
-          const res = await fetch("{% url 'api_clases' %}");
-          const data = await res.json();
-          const evs = data.clases.map(c => ({
-            id: c.id,
-            title: `${c.nombre} (${c.profesor})`,
-            start: `${c.fecha}T${c.hora_inicio}`,
-            end: `${c.fecha}T${c.hora_fin}`,
-            backgroundColor: colorPorNombre(c.nombre),
-            borderColor: colorPorNombre(c.nombre),
-          }));
-          success(evs);
-        } catch (e) { failure(e); }
-      },
-      select: (arg) => {
-        // Redondear a hora en punto
-        const start = new Date(arg.start); start.setMinutes(0,0,0);
-        const end = new Date(start.getTime() + 60*60*1000);
-
-        document.getElementById('crearFecha').value = start.toISOString().slice(0,10);
-        document.getElementById('crearHoraIni').value = String(start.toTimeString().slice(0,5));
-        document.getElementById('crearHoraFin').value = String(end.toTimeString().slice(0,5));
-        document.getElementById('crearError').classList.add('d-none');
-        modalCrear.show();
-      },
-      eventClick: async (info) => {
-        const id = info.event.id;
-        const r = await fetch(`{% url 'api_detalle_clase' 0 %}`.replace('0', id));
-        const data = await r.json();
-        if (!data.ok) return;
-
-        const c = data.clase;
-        document.getElementById('detalleTitulo').textContent = c.nombre;
-        document.getElementById('detalleProfesor').textContent = c.profesor;
-        document.getElementById('detalleFecha').textContent = c.fecha;
-        document.getElementById('detalleHorario').textContent = `${c.hora_inicio} - ${c.hora_fin}`;
-        document.getElementById('detalleCupos').textContent = c.cupos;
-        document.getElementById('detalleInsc').textContent = c.inscritos;
-
-        // Llenar tabla inscritos
-        const tbody = document.querySelector('#tablaInscritos tbody');
-        tbody.innerHTML = '';
-        c.alumnos.forEach(a => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${a.socio__nombre} ${a.socio__apellido_paterno || ''}</td>
-            <td>
-              <select class="form-select form-select-sm sel-asist" data-id="${a.id}">
-                <option value="pendiente" ${a.asistencia==='pendiente'?'selected':''}>Pendiente</option>
-                <option value="presente" ${a.asistencia==='presente'?'selected':''}>Presente</option>
-                <option value="ausente" ${a.asistencia==='ausente'?'selected':''}>Ausente</option>
-              </select>
-            </td>
-            <td><button class="btn btn-sm btn-outline-danger btn-del-insc" data-id="${a.id}">Eliminar</button></td>
-          `;
-          tbody.appendChild(tr);
-        });
-
-        // Guardar id clase
-        document.getElementById('btnEliminarClase').dataset.id = c.id;
-        document.getElementById('formInscribir').dataset.claseId = c.id;
-
-        // Control cupos
-        const btnIns = document.getElementById('btnInscribir');
-        const err = document.getElementById('inscError');
-        if (c.inscritos >= c.cupos) {
-          btnIns.disabled = true;
-          err.classList.remove('d-none');
-          err.textContent = 'Cupos completos para esta clase.';
-        } else {
-          btnIns.disabled = false;
-          err.classList.add('d-none');
-          err.textContent = '';
-        }
-
-        modalDetalle.show();
-      }
-    });
-
-    calendar.render();
-
-    // Crear clase
-    document.getElementById('formCrearClase').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      const res = await fetch("{% url 'api_crear_clase' %}", {
-        method: 'POST',
-        headers: { 'X-CSRFToken': CSRF },
-        body: fd
+      const tbody = document.querySelector('#tablaInscritos tbody');
+      tbody.innerHTML = '';
+      c.alumnos.forEach(a => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${a.socio__nombre} ${a.socio__apellido_paterno || ''}</td>
+          <td>
+            <select class="form-select form-select-sm sel-asist" data-id="${a.id}">
+              <option value="pendiente" ${a.asistencia==='pendiente'?'selected':''}>Pendiente</option>
+              <option value="presente" ${a.asistencia==='presente'?'selected':''}>Presente</option>
+              <option value="ausente" ${a.asistencia==='ausente'?'selected':''}>Ausente</option>
+            </select>
+          </td>
+          <td><button class="btn btn-sm btn-outline-danger btn-del-insc" data-id="${a.id}">Eliminar</button></td>
+        `;
+        tbody.appendChild(tr);
       });
-      const data = await res.json();
-      const err = document.getElementById('crearError');
-      if (!data.ok) {
-        err.textContent = data.msg || 'Error al crear la clase.';
-        err.classList.remove('d-none');
-        return;
-      }
-      err.classList.add('d-none');
-      e.target.reset();
-      bootstrap.Modal.getInstance(document.getElementById('modalCrearClase')).hide();
-      calendar.refetchEvents();
-    });
 
-    // Inscribir socio
-    document.getElementById('formInscribir').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const claseId = e.target.dataset.claseId;
-      const fd = new FormData(e.target);
-      const res = await fetch(`{% url 'api_inscribir_socio' 0 %}`.replace('0', claseId), {
-        method: 'POST',
-        headers: { 'X-CSRFToken': CSRF },
-        body: fd
-      });
-      const data = await res.json();
+      document.getElementById('btnEliminarClase').dataset.id = c.id;
+      document.getElementById('formInscribir').dataset.claseId = c.id;
+
+      const btnIns = document.getElementById('btnInscribir');
       const err = document.getElementById('inscError');
-      if (!data.ok) {
-        err.textContent = data.msg || 'No se pudo inscribir.';
+      if (c.inscritos >= c.cupos) {
+        btnIns.disabled = true;
         err.classList.remove('d-none');
-        return;
+        err.textContent = 'Cupos completos para esta clase.';
+      } else {
+        btnIns.disabled = false;
+        err.classList.add('d-none');
+        err.textContent = '';
       }
-      err.classList.add('d-none');
-      // refrescar contadores
-      const r = await fetch(`{% url 'api_detalle_clase' 0 %}`.replace('0', claseId));
-      const d = await r.json();
-      if (d.ok) {
-        document.getElementById('detalleCupos').textContent = d.clase.cupos;
-        document.getElementById('detalleInsc').textContent = d.clase.inscritos;
-      }
-      calendar.refetchEvents();
-      e.target.reset();
-    });
 
-    // Cambiar asistencia
-    document.getElementById('tablaInscritos').addEventListener('change', async (e) => {
-      if (!e.target.classList.contains('sel-asist')) return;
-      const inscId = e.target.dataset.id;
-      const fd = new FormData(); fd.append('asistencia', e.target.value);
-      await fetch(`{% url 'api_cambiar_asistencia' 0 %}`.replace('0', inscId), {
-        method: 'POST', headers: { 'X-CSRFToken': CSRF }, body: fd
-      });
-    });
-
-    // Eliminar inscripción
-    document.getElementById('tablaInscritos').addEventListener('click', async (e) => {
-      if (!e.target.classList.contains('btn-del-insc')) return;
-      const inscId = e.target.dataset.id;
-      if (!confirm('¿Eliminar inscripción?')) return;
-      await fetch(`{% url 'api_eliminar_inscripcion' 0 %}`.replace('0', inscId), {
-        method: 'POST', headers: { 'X-CSRFToken': CSRF }
-      });
-      e.target.closest('tr').remove();
-      const detalleInsc = document.getElementById('detalleInsc');
-      detalleInsc.textContent = String(Number(detalleInsc.textContent) - 1);
-      calendar.refetchEvents();
-    });
-
-    // Eliminar clase
-    document.getElementById('btnEliminarClase').addEventListener('click', async (e) => {
-      const id = e.target.dataset.id;
-      if (!confirm('¿Eliminar clase completa?')) return;
-      await fetch(`{% url 'api_eliminar_clase' 0 %}`.replace('0', id), {
-        method: 'POST', headers: { 'X-CSRFToken': CSRF }
-      });
-      bootstrap.Modal.getInstance(document.getElementById('modalDetalleClase')).hide();
-      calendar.refetchEvents();
-    });
+      modalDetalle.show();
+    }
   });
+
+  calendar.render();
+});
 </script>
 {% endblock %}

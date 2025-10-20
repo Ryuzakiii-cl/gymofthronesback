@@ -33,7 +33,7 @@ class SocioPlan(models.Model):
     plan = models.ForeignKey(Plan, on_delete=models.CASCADE)
     fecInicio = models.DateField()
     fecFin = models.DateField()
-    monto_pagado = models.DecimalField(max_digits=10, decimal_places=2)
+    monto_pagado = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     estado = models.BooleanField(choices=ESTADO_CHOICES, default=True)
 
     def __str__(self):
