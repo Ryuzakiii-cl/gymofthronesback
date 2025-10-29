@@ -26,7 +26,8 @@
           <td>{{ p.fecha_pago }}</td>
           <td>
             <a href="{% url 'editar_pago' p.id %}" class="btn btn-sm btn-outline-dark">✏️</a>
-            <a href="{% url 'eliminar_pago' p.id %}" class="btn btn-sm btn-outline-danger">🗑️</a>
+            <a href="{% url 'eliminar_pago' p.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Seguro que deseas eliminar este pago?')"
+ >🗑️</a>
           </td>
         </tr>
       {% empty %}

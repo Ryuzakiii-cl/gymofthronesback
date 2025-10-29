@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from django.db.models.functions import TruncMonth
 from apps.clientes.models import Socio
 from apps.pagos.models import Pago
-from apps.reservas.models import Reserva, Clase, Cancha
+from apps.reservas.models import Reserva, Taller, Cancha
 from apps.planes.models import Plan, SocioPlan
 import pandas as pd
 from django.http import HttpResponse, JsonResponse
@@ -36,7 +36,7 @@ def dashboard_reportes(request):
     ).aggregate(Sum('monto'))['monto__sum'] or 0
 
     reservas_totales = Reserva.objects.filter(fecha__range=(inicio, fin)).count()
-    clases_activas = Clase.objects.filter(activo=True).count()
+    talleres_activos = Taller.objects.filter(activo=True).count()
     canchas_totales = Cancha.objects.count()
 
     # Ocupación actual
@@ -104,7 +104,7 @@ def dashboard_reportes(request):
         'socios_activos': socios_activos,
         'ingresos_totales': ingresos_totales,
         'reservas_totales': reservas_totales,
-        'clases_activas': clases_activas,
+        'talleres_activos': talleres_activos,
         'ocupacion': ocupacion,
         'socios_por_plan': socios_por_plan,
         'ingresos_por_plan': ingresos_por_plan,

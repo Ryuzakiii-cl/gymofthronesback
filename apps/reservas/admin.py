@@ -1,10 +1,10 @@
 from django.contrib import admin
-from .models import Clase, InscripcionClase, Cancha, Reserva
+from .models import Taller, InscripcionTaller, Cancha, Reserva
 
-# ============ CLASES ============
+# ============ Talleres ============
 
-@admin.register(Clase)
-class ClaseAdmin(admin.ModelAdmin):
+@admin.register(Taller)
+class TallerAdmin(admin.ModelAdmin):
     list_display = ('nombre', 'profesor', 'fecha', 'hora_inicio', 'hora_fin', 'cupos', 'activo')
     list_filter = ('activo', 'profesor', 'fecha')
     search_fields = ('nombre', 'profesor__nombre')
@@ -12,11 +12,11 @@ class ClaseAdmin(admin.ModelAdmin):
     list_per_page = 20
 
 
-@admin.register(InscripcionClase)
-class InscripcionClaseAdmin(admin.ModelAdmin):
-    list_display = ('socio', 'clase', 'estado', 'asistencia', 'fec_registro')
+@admin.register(InscripcionTaller)
+class InscripcionTallerAdmin(admin.ModelAdmin):
+    list_display = ('socio', 'taller', 'estado', 'asistencia', 'fec_registro')
     list_filter = ('estado', 'asistencia')
-    search_fields = ('socio__nombre', 'clase__nombre')
+    search_fields = ('socio__nombre', 'taller__nombre')
     date_hierarchy = 'fec_registro'
     list_per_page = 20
 

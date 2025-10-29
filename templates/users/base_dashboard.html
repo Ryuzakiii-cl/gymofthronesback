@@ -191,8 +191,10 @@
 
     <ul>
       {% if request.user.rol == 'superadmin' %}
+        <li><a href="{% url 'lista_usuarios' %}"><i class="ph ph-user"></i><span>Usuarios</span></a></li>
         <li><a href="{% url 'lista_socios' %}"><i class="ph ph-users"></i><span>Socios</span></a></li>
         <li><a href="{% url 'lista_planes' %}"><i class="ph ph-clipboard-text"></i><span>Planes</span></a></li>
+        <li><a href="{% url 'canchas_list' %}"><i class="ph ph-soccer-ball"></i><span>Canchas</span></a></li>
         <li><a href="{% url 'lista_pagos' %}"><i class="ph ph-credit-card"></i><span>Pagos</span></a></li>
 
         <!-- Submenú de Reservas -->
@@ -202,11 +204,11 @@
             <i class="ph ph-caret-right arrow"></i>
           </a>
           <div class="submenu" id="submenuReservas">
-            <a href="#" data-url="{% url 'calendario_canchas' %}" class="ajax-link"><i class="ph ph-soccer-ball"></i> Canchas</a>
-            <a href="#" data-url="{% url 'calendario_clases' %}" class="ajax-link"><i class="ph ph-person-simple-walk"></i> Clases</a>
+            <!-- 🔹 Ahora son enlaces normales -->
+            <a href="{% url 'calendario_canchas' %}"><i class="ph ph-soccer-ball"></i> Canchas</a>
+            <a href="{% url 'calendario_talleres' %}"><i class="ph ph-person-simple-walk"></i>Talleres</a>
           </div>
         </li>
-
 
         <li><a href="{% url 'dashboard_reportes' %}"><i class="ph ph-chart-line"></i><span>Reportes</span></a></li>
 
@@ -222,12 +224,12 @@
           </a>
           <div class="submenu" id="submenuReservas">
             <a href="{% url 'calendario_canchas' %}"><i class="ph ph-soccer-ball"></i> Canchas</a>
-            <a href="{% url 'calendario_clases' %}"><i class="ph ph-person-simple-walk"></i> Clases</a>
+            <a href="{% url 'calendario_talleres' %}"><i class="ph ph-person-simple-walk"></i>Talleres</a>
           </div>
         </li>
 
       {% elif request.user.rol == 'profesor' %}
-        <li><a href="#"><i class="ph ph-chalkboard-teacher"></i><span>Mis Clases</span></a></li>
+        <li><a href="#"><i class="ph ph-chalkboard-teacher"></i><span>Mis Talleres</span></a></li>
 
       {% elif request.user.rol == 'socio' %}
         <li><a href="#"><i class="ph ph-dumbbell"></i><span>Mi Plan</span></a></li>
@@ -250,40 +252,21 @@
     {% endblock %}
   </div>
 
-  <!-- JS -->
-<script>
-  // Submenú
-  const toggleReservas = document.getElementById('toggleReservas');
-  const submenu = document.getElementById('submenuReservas');
-  const arrow = document.querySelector('.arrow');
+  <!-- Solo mantenemos el script del submenú -->
+  <script>
+  (function () {
+    const toggle = document.getElementById('toggleReservas');
+    const submenu = document.getElementById('submenuReservas');
+    const arrow = document.querySelector('.arrow');
+    if (toggle) {
+      toggle.addEventListener('click', () => {
+        submenu.classList.toggle('show');
+        arrow.classList.toggle('rotate');
+      });
+    }
+  })();
+  </script>
 
-  if (toggleReservas) {
-    toggleReservas.addEventListener('click', () => {
-      submenu.classList.toggle('show');
-      arrow.classList.toggle('rotate');
-    });
-  }
-
-  // AJAX dinámico para cargar módulos sin recargar la página
-  document.querySelectorAll('.ajax-link').forEach(link => {
-    link.addEventListener('click', e => {
-      e.preventDefault();
-      const url = link.dataset.url;
-
-      fetch(url)
-        .then(response => response.text())
-        .then(html => {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, 'text/html');
-          const newContent = doc.querySelector('.main-content').innerHTML;
-          document.querySelector('.main-content').innerHTML = newContent;
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        })
-        .catch(err => console.error("Error cargando módulo:", err));
-    });
-  });
-</script>
-{% block extra_js %}{% endblock %}
-
+  {% block extra_js %}{% endblock %}
 </body>
 </html>

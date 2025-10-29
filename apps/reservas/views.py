@@ -1,14 +1,17 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.http import JsonResponse, HttpResponseBadRequest
-from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
+from django.shortcuts import render, get_object_or_404, redirect 
 from django.views.decorators.http import require_POST
+from django.db import IntegrityError
 
 from apps.users.models import Usuario
 from apps.clientes.models import Socio
-from apps.planes.models import Plan, SocioPlan
-from .models import Clase, InscripcionClase, Cancha, Reserva
+from apps.planes.models import SocioPlan
+# Modelos importados correctamente
+from .models import Taller, InscripcionTaller, Cancha, Reserva 
+
 
 # ----------------------------
 # Permisos
@@ -19,22 +22,28 @@ def es_admin_o_superadmin(user):
 def es_profesor(user):
     return user.is_authenticated and getattr(user, 'rol', None) == 'profesor'
 
+def es_socio(user):
+    return user.is_authenticated and getattr(user, 'rol', None) == 'socio'
+
 
 # ============================
-#        CLASES (CRUD)
+#       TALLERES (CRUD)
 # ============================
 
 @login_required
 @user_passes_test(es_admin_o_superadmin)
-def clases_list(request):
-    clases = Clase.objects.all().order_by('fecha', 'hora_inicio')
-    return render(request, 'reservas/clases_list.html', {'clases': clases})
+def taller_list(request):
+    """Lista todos los talleres."""
+    talleres = Taller.objects.all().order_by('fecha', 'hora_inicio')
+    # Contexto actualizado a 'talleres'
+    return render(request, 'reservas/talleres_list.html', {'talleres': talleres})
 
 @login_required
 @user_passes_test(es_admin_o_superadmin)
-def clase_form(request, clase_id=None):
+def taller_form(request, taller_id=None):
+    """Formulario para crear o editar un Taller."""
     profesores = Usuario.objects.filter(rol='profesor')
-    clase = get_object_or_404(Clase, id=clase_id) if clase_id else None
+    taller = get_object_or_404(Taller, id_taller=taller_id) if taller_id else None
 
     if request.method == 'POST':
         nombre = request.POST.get('nombre')
@@ -49,27 +58,28 @@ def clase_form(request, clase_id=None):
         profesor = get_object_or_404(Usuario, id=profesor_id)
 
         # Validación: choque de horario del mismo profesor
-        choque = Clase.objects.filter(
+        choque = Taller.objects.filter(
             profesor=profesor, fecha=fecha,
             hora_inicio__lt=hora_fin, hora_fin__gt=hora_inicio
-        ).exclude(id=clase.id if clase else None).exists()
+        ).exclude(id_taller=taller.id_taller if taller else None).exists()
+        
         if choque:
-            messages.error(request, '❌ El profesor ya tiene una clase en ese horario.')
-            return redirect('clases_list')
+            messages.error(request, '❌ El profesor ya tiene un taller en ese horario.')
+            return redirect('talleres_list') 
 
-        if clase:
-            clase.nombre = nombre
-            clase.descripcion = descripcion
-            clase.profesor = profesor
-            clase.cupos = cupos
-            clase.fecha = fecha
-            clase.hora_inicio = hora_inicio
-            clase.hora_fin = hora_fin
-            clase.activo = activo
-            clase.save()
-            messages.success(request, '✅ Clase actualizada.')
+        if taller:
+            taller.nombre = nombre
+            taller.descripcion = descripcion
+            taller.profesor = profesor
+            taller.cupos = cupos
+            taller.fecha = fecha
+            taller.hora_inicio = hora_inicio
+            taller.hora_fin = hora_fin
+            taller.activo = activo
+            taller.save()
+            messages.success(request, '✅ Taller actualizado.')
         else:
-            Clase.objects.create(
+            Taller.objects.create(
                 nombre=nombre,
                 descripcion=descripcion,
                 profesor=profesor,
@@ -79,23 +89,26 @@ def clase_form(request, clase_id=None):
                 hora_fin=hora_fin,
                 activo=activo
             )
-            messages.success(request, '✅ Clase creada.')
-        return redirect('clases_list')
+            messages.success(request, '✅ Taller creado.')
+        return redirect('talleres_list') # OJO: URL 'clases_list'
 
-    return render(request, 'reservas/clase_form.html', {'clase': clase, 'profesores': profesores})
-
-@login_required
-@user_passes_test(es_admin_o_superadmin)
-def clase_eliminar(request, clase_id):
-    clase = get_object_or_404(Clase, id=clase_id)
-    clase.delete()
-    messages.success(request, '🗑️ Clase eliminada.')
-    return redirect('clases_list')
+    # Contexto actualizado a 'taller'
+    return render(request, 'reservas/taller_form.html', {'taller': taller, 'profesores': profesores})
 
 @login_required
 @user_passes_test(es_admin_o_superadmin)
-def inscribir_socio_clase(request, clase_id):
-    clase = get_object_or_404(Clase, id=clase_id)
+def taller_eliminar(request, taller_id):
+    """Elimina un taller."""
+    taller = get_object_or_404(Taller, id_taller=taller_id) # Usar id_taller
+    taller.delete()
+    messages.success(request, '🗑️ Taller eliminado.')
+    return redirect('clases_list') # OJO: URL 'clases_list'
+
+@login_required
+@user_passes_test(es_admin_o_superadmin)
+def inscribir_socio_taller(request, taller_id):
+    """Inscribe manualmente un socio a un taller (vista de admin)."""
+    taller = get_object_or_404(Taller, id_taller=taller_id) # Usar Taller y id_taller
     socios = Socio.objects.filter(estado=True)
 
     if request.method == 'POST':
@@ -103,32 +116,37 @@ def inscribir_socio_clase(request, clase_id):
         socio = get_object_or_404(Socio, id=socio_id)
 
         # Validar cupos
-        if clase.inscritos_count() >= clase.cupos:
+        if taller.inscritos_count() >= taller.cupos:
             messages.error(request, '❌ No hay cupos disponibles.')
-            return redirect('clases_list')
+            return redirect('clases_list') # OJO: URL 'clases_list'
 
         # Validar plan (solo planes con puede_reservar_clases)
         socio_plan = SocioPlan.objects.filter(socio=socio, estado=True).order_by('-fecFin').first()
-        if not socio_plan or not socio_plan.plan.puede_reservar_clases:
-            messages.error(request, '❌ El socio no tiene derecho a inscribirse en clases (plan).')
-            return redirect('clases_list')
+        if not socio_plan or not socio_plan.plan.puede_reservar_talleres:
+            messages.error(request, '❌ El socio no tiene derecho a inscribirse en talleres (plan).')
+            return redirect('clases_list') # OJO: URL 'clases_list'
 
-        InscripcionClase.objects.get_or_create(socio=socio, clase=clase, defaults={'estado': 'inscrito'})
-        messages.success(request, f'✅ {socio.nombre} inscrito en {clase.nombre}.')
-        return redirect('clases_list')
+        # Usar InscripcionTaller y el campo 'taller'
+        InscripcionTaller.objects.get_or_create(socio=socio, taller=taller, defaults={'estado': 'inscrito'})
+        messages.success(request, f'✅ {socio.nombre} inscrito en {taller.nombre}.')
+        return redirect('clases_list') # OJO: URL 'clases_list'
 
-    return render(request, 'reservas/inscribir_clase.html', {'clase': clase, 'socios': socios})
+    # Contexto actualizado a 'taller'
+    return render(request, 'reservas/inscribir_clase.html', {'taller': taller, 'socios': socios})
 
 @login_required
 @user_passes_test(es_profesor)
-def clases_profesor(request):
-    clases = Clase.objects.filter(profesor=request.user).order_by('fecha', 'hora_inicio')
-    return render(request, 'reservas/clases_profesor.html', {'clases': clases})
+def talleres_profesor(request):
+    """Vista para que el profesor vea sus talleres asignados."""
+    talleres = Taller.objects.filter(profesor=request.user).order_by('fecha', 'hora_inicio')
+    # Contexto actualizado a 'talleres'
+    return render(request, 'reservas/clases_profesor.html', {'talleres': talleres})
 
 
 # ============================
-#      CANCHAS & RESERVAS
+#       CANCHAS 
 # ============================
+
 
 @login_required
 @user_passes_test(es_admin_o_superadmin)
@@ -165,17 +183,33 @@ def cancha_form(request, cancha_id=None):
 
     return render(request, 'reservas/cancha_form.html', {'cancha': cancha})
 
+
+@login_required
+@user_passes_test(es_admin_o_superadmin)
+def eliminar_cancha(request, cancha_id):
+    """Elimina una cancha existente."""
+    cancha = get_object_or_404(Cancha, id=cancha_id)
+    nombre = cancha.nombre
+
+    try:
+        cancha.delete()
+        messages.success(request, f"🗑️ La cancha '{nombre}' fue eliminada correctamente.")
+    except Exception as e:
+        messages.error(request, f"❌ No se pudo eliminar la cancha: {e}")
+
+    return redirect('canchas_list')
+
+
 @login_required
 @user_passes_test(es_admin_o_superadmin)
 def reservas_cancha_list(request):
     reservas = Reserva.objects.select_related('cancha', 'socio').all()
     return render(request, 'reservas/reservas_cancha_list.html', {'reservas': reservas})
 
-# *** Vista requerida por tus URLs: la dejamos implementada aunque uses modales ***
 @login_required
 @user_passes_test(es_admin_o_superadmin)
 def reserva_cancha_form(request, reserva_id=None):
-    """Formulario clásico de reserva (no modal). Lo mantenemos para no romper rutas existentes."""
+    """Formulario clásico de reserva (no modal)."""
     socios = Socio.objects.filter(estado=True)
     canchas = Cancha.objects.filter(activo=True)
     reserva = get_object_or_404(Reserva, id=reserva_id) if reserva_id else None
@@ -187,13 +221,11 @@ def reserva_cancha_form(request, reserva_id=None):
         hora_inicio = request.POST.get('hora_inicio')
         hora_fin = request.POST.get('hora_fin')
 
-        # Validar plan (solo planes con puede_reservar_canchas)
         socio_plan = SocioPlan.objects.filter(socio=socio, estado=True).order_by('-fecFin').first()
         if not socio_plan or not socio_plan.plan.puede_reservar_canchas:
             messages.error(request, '❌ El socio no tiene derecho a reservar canchas (plan).')
             return redirect('reservas_cancha_list')
 
-        # Validar choque
         solapa = Reserva.objects.filter(
             cancha=cancha, fecha=fecha, estado__in=['pendiente', 'confirmada']
         ).exclude(id=reserva.id if reserva else None).filter(
@@ -236,7 +268,7 @@ def reserva_cancha_cancelar(request, reserva_id):
 
 
 # ============================
-#          CALENDARIOS
+#         CALENDARIOS
 # ============================
 
 @login_required
@@ -248,10 +280,10 @@ def calendario_canchas(request):
 
 @login_required
 @user_passes_test(es_admin_o_superadmin)
-def calendario_clases(request):
+def calendario_talleres(request): 
     profesores = list(Usuario.objects.filter(rol='profesor').values('id', 'nombre', 'apellido'))
     socios = list(Socio.objects.filter(estado=True).values('id', 'nombre', 'apellido_paterno'))
-    return render(request, 'reservas/calendario_clases.html', {
+    return render(request, 'reservas/calendario_talleres.html', { #Nombre de template
         'profesores': profesores,
         'socios': socios,
     })
@@ -273,19 +305,47 @@ def eventos_canchas_json(request):
         })
     return JsonResponse(eventos, safe=False)
 
+
 @login_required
-def eventos_clases_json(request):
-    """Eventos del calendario de clases."""
+def eventos_talleres_json(request): # Renombrada
+    """Devuelve talleres e inscripciones para el calendario de talleres."""
     eventos = []
-    clases = Clase.objects.filter(activo=True).select_related('profesor')
-    for c in clases:
+
+    # --- Talleres base ---
+    for taller in Taller.objects.filter(activo=True): # Usar Taller
         eventos.append({
-            "id": c.id,
-            "title": f"{c.nombre} ({c.profesor.nombre})",
-            "start": f"{c.fecha}T{c.hora_inicio}",
-            "end": f"{c.fecha}T{c.hora_fin}",
-            "color": "#5A8DEE"
+            "id": taller.id_taller, # Usar id_taller
+            "title": taller.nombre,
+            "start": f"{taller.fecha}T{taller.hora_inicio}",
+            "end": f"{taller.fecha}T{taller.hora_fin}",
+            "color": "#007bff",  # azul = taller disponible
+            "extendedProps": {
+                "tipo": "taller", # 'taller'
+                "id_taller": taller.id_taller, # id_taller
+                "profesor": f"{taller.profesor.nombre} {getattr(taller.profesor, 'apellido', '')}".strip(),
+                "cupos": taller.cupos,
+                "inscritos": taller.inscritos_count(),
+            }
         })
+
+    # --- Inscripciones de socios ---
+    # Usar InscripcionTaller y select_related('taller', 'socio')
+    inscripciones = InscripcionTaller.objects.select_related('taller', 'socio').filter(estado='inscrito') 
+    for insc in inscripciones:
+        eventos.append({
+            "id": f"insc-{insc.id}",
+            "title": f"{insc.socio.nombre} ({insc.taller.nombre})", # usar insc.taller
+            "start": f"{insc.taller.fecha}T{insc.taller.hora_inicio}", # usar insc.taller
+            "end": f"{insc.taller.fecha}T{insc.taller.hora_fin}", # usar insc.taller
+            "color": "#28a745",  # verde = reserva
+            "extendedProps": {
+                "tipo": "reserva",
+                "id_inscripcion": insc.id,
+                "socio": insc.socio.nombre,
+                "taller": insc.taller.nombre, # 'taller'
+            }
+        })
+
     return JsonResponse(eventos, safe=False)
 
 
@@ -293,28 +353,29 @@ def eventos_clases_json(request):
 #        APIs (AJAX)
 # ============================
 
-# ---- Clases
+# ---- Talleres
 @login_required
 @user_passes_test(es_admin_o_superadmin)
-def api_clases(request):
-    clases = Clase.objects.filter(activo=True).select_related('profesor').order_by('fecha', 'hora_inicio')
+def api_talleres(request): # Renombrada
+    """API que lista todos los talleres."""
+    talleres = Taller.objects.filter(activo=True).select_related('profesor').order_by('fecha', 'hora_inicio')
     data = [{
-        'id': c.id,
+        'id': c.id_taller,
         'nombre': c.nombre,
         'profesor': f"{c.profesor.nombre} {getattr(c.profesor, 'apellido', '')}".strip(),
-        'profesor_id': c.profesor_id,
         'cupos': c.cupos,
         'fecha': c.fecha.strftime('%Y-%m-%d'),
         'hora_inicio': c.hora_inicio.strftime('%H:%M'),
         'hora_fin': c.hora_fin.strftime('%H:%M'),
         'inscritos': c.inscritos_count(),
-    } for c in clases]
-    return JsonResponse({'clases': data})
+    } for c in talleres] # variable 'talleres'
+    return JsonResponse({'ok': True, 'talleres': data}) # 'talleres'
 
 @login_required
 @user_passes_test(es_admin_o_superadmin)
 @require_POST
-def api_crear_clase(request):
+def api_crear_taller(request):
+    """Crear un nuevo taller desde el calendario."""
     try:
         nombre = request.POST.get('nombre')
         profesor_id = int(request.POST.get('profesor_id'))
@@ -322,17 +383,16 @@ def api_crear_clase(request):
         fecha = request.POST.get('fecha')
         hora_inicio = request.POST.get('hora_inicio')
         hora_fin = request.POST.get('hora_fin')
-
         profesor = get_object_or_404(Usuario, id=profesor_id, rol='profesor')
 
-        choque = Clase.objects.filter(
+        choque = Taller.objects.filter(
             profesor=profesor, fecha=fecha,
             hora_inicio__lt=hora_fin, hora_fin__gt=hora_inicio
         ).exists()
         if choque:
-            return JsonResponse({'ok': False, 'msg': 'El profesor ya tiene una clase en ese horario.'}, status=400)
+            return JsonResponse({'ok': False, 'msg': 'El profesor ya tiene un taller en ese horario.'}, status=400)
 
-        clase = Clase.objects.create(
+        nueva = Taller.objects.create( 
             nombre=nombre,
             profesor=profesor,
             cupos=cupos,
@@ -341,73 +401,88 @@ def api_crear_clase(request):
             hora_fin=hora_fin,
             activo=True
         )
-        return JsonResponse({'ok': True, 'id': clase.id})
+
+        return JsonResponse({'ok': True, 'msg': 'Taller creado correctamente', 'id': nueva.id_taller})
+    except Exception as e:
+        return JsonResponse({'ok': False, 'msg': str(e)}, status=400)
+
+
+@login_required
+@user_passes_test(es_admin_o_superadmin)
+def api_detalle_taller(request, taller_id): 
+    """Devuelve detalle de un taller con los socios inscritos."""
+    taller = get_object_or_404(Taller, id_taller=taller_id) 
+    
+    inscritos = taller.inscripciones.select_related('socio').filter(estado='inscrito').values(
+        'id', 'socio_id', 'socio__nombre', 'socio__apellido_paterno', 'asistencia'
+    )
+    data = {
+        'id': taller.id_taller,
+        'nombre': taller.nombre,
+        'profesor': f"{taller.profesor.nombre} {getattr(taller.profesor, 'apellido', '')}".strip(),
+        'cupos': taller.cupos,
+        'inscritos': taller.inscritos_count(),
+        'fecha': taller.fecha.strftime('%Y-%m-%d'),
+        'hora_inicio': taller.hora_inicio.strftime('%H:%M'),
+        'hora_fin': taller.hora_fin.strftime('%H:%M'),
+        'alumnos': list(inscritos),
+    }
+    return JsonResponse({'ok': True, 'taller': data}) 
+
+@login_required
+@user_passes_test(es_admin_o_superadmin)
+@require_POST
+def api_eliminar_taller(request, taller_id): 
+    """Elimina un taller."""
+    taller = get_object_or_404(Taller, id_taller=taller_id) 
+    taller.delete()
+    return JsonResponse({'ok': True, 'msg': 'Taller eliminado correctamente'})
+
+
+@login_required
+@user_passes_test(es_admin_o_superadmin)
+@require_POST
+def api_inscribir_socio(request, taller_id):
+    """Inscribe un socio en un taller, si hay cupos y su plan lo permite."""
+    try:
+        taller = get_object_or_404(Taller, id_taller=taller_id) 
+        socio_id = request.POST.get('socio_id')
+        socio = get_object_or_404(Socio, id=socio_id, estado=True)
+
+        # Validar cupos
+        if taller.inscritos_count() >= taller.cupos:
+            return JsonResponse({'ok': False, 'msg': 'Cupos completos para este taller.'}, status=400)
+
+        # Validar plan
+        socio_plan = SocioPlan.objects.filter(socio=socio, estado=True).order_by('-fecFin').first()
+        if not socio_plan or not socio_plan.plan.puede_reservar_talleres:
+            return JsonResponse({'ok': False, 'msg': 'El socio no tiene derecho a inscribirse en talleres (plan).'}, status=400)
+
+        
+        insc, created = InscripcionTaller.objects.get_or_create(
+            socio=socio, taller=taller, defaults={'estado': 'inscrito'}
+        )
+        if not created and insc.estado != 'inscrito':
+            insc.estado = 'inscrito'
+            insc.save()
+
+        return JsonResponse({'ok': True, 'msg': 'Socio inscrito correctamente', 'id': insc.id})
+    except IntegrityError:
+        return JsonResponse({'ok': False, 'msg': 'El socio ya está inscrito en este taller.'}, status=400)
     except Exception as e:
         return JsonResponse({'ok': False, 'msg': str(e)}, status=400)
 
 @login_required
 @user_passes_test(es_admin_o_superadmin)
-def api_detalle_clase(request, clase_id):
-    c = get_object_or_404(Clase, id=clase_id)
-    inscritos = c.inscripciones.select_related('socio').filter(estado='inscrito').values(
-        'id', 'socio_id', 'socio__nombre', 'socio__apellido_paterno', 'asistencia'
-    )
-    data = {
-        'id': c.id,
-        'nombre': c.nombre,
-        'profesor_id': c.profesor_id,
-        'profesor': f"{c.profesor.nombre} {getattr(c.profesor, 'apellido', '')}".strip(),
-        'cupos': c.cupos,
-        'inscritos': c.inscritos_count(),
-        'fecha': c.fecha.strftime('%Y-%m-%d'),
-        'hora_inicio': c.hora_inicio.strftime('%H:%M'),
-        'hora_fin': c.hora_fin.strftime('%H:%M'),
-        'alumnos': list(inscritos),
-    }
-    return JsonResponse({'ok': True, 'clase': data})
-
-@login_required
-@user_passes_test(es_admin_o_superadmin)
-@require_POST
-def api_eliminar_clase(request, clase_id):
-    c = get_object_or_404(Clase, id=clase_id)
-    c.delete()
-    return JsonResponse({'ok': True})
-
-@login_required
-@user_passes_test(es_admin_o_superadmin)
-@require_POST
-def api_inscribir_socio(request, clase_id):
-    c = get_object_or_404(Clase, id=clase_id)
-    socio_id = request.POST.get('socio_id')
-    socio = get_object_or_404(Socio, id=socio_id, estado=True)
-
-    # Cupos
-    if c.inscritos_count() >= c.cupos:
-        return JsonResponse({'ok': False, 'msg': 'Cupos completos para esta clase.'}, status=400)
-
-    # Validar plan
-    socio_plan = SocioPlan.objects.filter(socio=socio, estado=True).order_by('-fecFin').first()
-    if not socio_plan or not socio_plan.plan.puede_reservar_clases:
-        return JsonResponse({'ok': False, 'msg': 'El socio no tiene derecho a inscribirse en clases (plan).'}, status=400)
-
-    insc, created = InscripcionClase.objects.get_or_create(
-        socio=socio, clase=c, defaults={'estado': 'inscrito'}
-    )
-    if not created and insc.estado != 'inscrito':
-        insc.estado = 'inscrito'
-        insc.save()
-
-    return JsonResponse({'ok': True})
-
-@login_required
-@user_passes_test(es_admin_o_superadmin)
 @require_POST
 def api_cambiar_asistencia(request, insc_id):
-    insc = get_object_or_404(InscripcionClase, id=insc_id)
+    """Cambia el estado de asistencia de una inscripcion."""
+    insc = get_object_or_404(InscripcionTaller, id=insc_id) 
     nueva = request.POST.get('asistencia')
-    if nueva not in dict(InscripcionClase.ASISTENCIA).keys():
+    
+    if nueva not in dict(InscripcionTaller.ASISTENCIA).keys():
         return JsonResponse({'ok': False, 'msg': 'Valor de asistencia inválido.'}, status=400)
+    
     insc.asistencia = nueva
     insc.save()
     return JsonResponse({'ok': True})
@@ -416,9 +491,10 @@ def api_cambiar_asistencia(request, insc_id):
 @user_passes_test(es_admin_o_superadmin)
 @require_POST
 def api_eliminar_inscripcion(request, insc_id):
-    insc = get_object_or_404(InscripcionClase, id=insc_id)
+    """Elimina una inscripción a taller."""
+    insc = get_object_or_404(InscripcionTaller, id=insc_id) 
     insc.delete()
-    return JsonResponse({'ok': True})
+    return JsonResponse({'ok': True, 'msg': 'Inscripción eliminada correctamente'})
 
 
 # ---- Canchas (AJAX creación desde modal)
@@ -432,12 +508,10 @@ def crear_reserva_ajax(request):
     hora_inicio = request.POST.get('hora_inicio')
     hora_fin = request.POST.get('hora_fin')
 
-    # Validar plan (solo planes con puede_reservar_canchas)
     socio_plan = SocioPlan.objects.filter(socio=socio, estado=True).order_by('-fecFin').first()
     if not socio_plan or not socio_plan.plan.puede_reservar_canchas:
         return JsonResponse({'status': 'error', 'message': 'El socio no puede reservar canchas con su plan.'}, status=400)
 
-    # Validar choque horario
     solapa = Reserva.objects.filter(
         cancha=cancha, fecha=fecha, estado__in=['pendiente', 'confirmada']
     ).filter(

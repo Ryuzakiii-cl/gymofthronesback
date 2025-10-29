@@ -1,0 +1,66 @@
+{% extends 'users/base_dashboard.html' %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <h3 class="fw-bold mb-4 text-center">{{ titulo }}</h3>
+
+  <form method="POST" class="card p-4 shadow-sm">
+    {% csrf_token %}
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">RUT</label>
+        <input type="text" name="rut" value="{{ usuario.rut|default:'' }}" class="form-control" {% if usuario %}readonly{% endif %} required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Nombre</label>
+        <input type="text" name="nombre" value="{{ usuario.nombre|default:'' }}" class="form-control" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Apellido</label>
+        <input type="text" name="apellido" value="{{ usuario.apellido|default:'' }}" class="form-control" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Correo</label>
+        <input type="email" name="correo" value="{{ usuario.correo|default:'' }}" class="form-control" required>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">Rol</label>
+        <select name="rol" class="form-select" required>
+          {% if usuario %}
+            {% for key, value in usuario.ROLES %}
+              <option value="{{ key }}" {% if usuario.rol == key %}selected{% endif %}>{{ value }}</option>
+            {% endfor %}
+          {% else %}
+            <option value="superadmin">Super Administrador</option>
+            <option value="admin">Administrador</option>
+            <option value="profesor">Profesor</option>
+            <option value="socio">Socio</option>
+          {% endif %}
+        </select>
+      </div>
+
+      {% if not usuario %}
+      <div class="col-md-3">
+        <label class="form-label">Contraseña</label>
+        <input type="password" name="password" class="form-control" required>
+      </div>
+      {% endif %}
+
+      {% if usuario %}
+      <div class="col-md-3">
+        <div class="form-check mt-4">
+          <input type="checkbox" name="is_active" class="form-check-input" {% if usuario.is_active %}checked{% endif %}>
+          <label class="form-check-label">Activo</label>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="text-end mt-4">
+      <button type="submit" class="btn btn-dark text-warning fw-bold">Guardar</button>
+      <a href="{% url 'lista_usuarios' %}" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

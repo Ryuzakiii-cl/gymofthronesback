@@ -8,7 +8,7 @@ class Plan(models.Model):
     duracion = models.PositiveIntegerField(help_text="Duración en días")
 
     # 🔹 Nuevos campos: control de acceso
-    puede_reservar_clases = models.BooleanField(default=False)
+    puede_reservar_talleres = models.BooleanField(default=False)
     puede_reservar_canchas = models.BooleanField(default=False)
 
     def __str__(self):

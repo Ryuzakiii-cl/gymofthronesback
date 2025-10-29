@@ -9,8 +9,8 @@ class PlanBeneficioInline(admin.TabularInline):
 
 @admin.register(Plan)
 class PlanAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'precio', 'duracion', 'puede_reservar_clases', 'puede_reservar_canchas')
-    list_filter = ('puede_reservar_clases', 'puede_reservar_canchas')
+    list_display = ('nombre', 'precio', 'duracion', 'puede_reservar_talleres', 'puede_reservar_canchas')
+    list_filter = ('puede_reservar_talleres', 'puede_reservar_canchas')
     search_fields = ('nombre',)
     ordering = ('nombre',)
     inlines = [PlanBeneficioInline]  #aquí lo integramos correctamente

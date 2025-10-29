@@ -3,16 +3,19 @@ from django.utils import timezone
 
 
 # =========================================
-#   CLASES
+#   TALLERES
 # =========================================
 
-class Clase(models.Model):
+# Representa un taller o clase dirigida por un profesor.
+class Taller(models.Model):
+    id_taller = models.AutoField(primary_key=True)
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField(blank=True, null=True)
     profesor = models.ForeignKey(
         'users.Usuario',
         on_delete=models.PROTECT,
-        limit_choices_to={'rol': 'profesor'}
+        limit_choices_to={'rol': 'profesor'},
+        related_name='talleres_asignados' 
     )
     cupos = models.PositiveIntegerField(default=10)
     fecha = models.DateField()
@@ -22,8 +25,8 @@ class Clase(models.Model):
 
     class Meta:
         ordering = ['fecha', 'hora_inicio']
-        verbose_name = "Clase"
-        verbose_name_plural = "Clases"
+        verbose_name = "Taller"
+        verbose_name_plural = "Talleres"
 
     def __str__(self):
         return f"{self.nombre} - {self.fecha} {self.hora_inicio}-{self.hora_fin}"
@@ -32,8 +35,8 @@ class Clase(models.Model):
         """Devuelve la cantidad de socios inscritos con estado activo."""
         return self.inscripciones.filter(estado='inscrito').count()
 
-
-class InscripcionClase(models.Model):
+# Representa la inscripción de un socio a una clase.
+class InscripcionTaller(models.Model):
     ESTADO = (
         ('inscrito', 'Inscrito'),
         ('cancelado', 'Cancelado')
@@ -48,25 +51,29 @@ class InscripcionClase(models.Model):
     socio = models.ForeignKey(
         'clientes.Socio',
         on_delete=models.CASCADE,
-        related_name='inscripciones_clase'
+        related_name='inscripciones_taller'
     )
-    clase = models.ForeignKey(
-        Clase,
+    taller = models.ForeignKey(
+        Taller,
         on_delete=models.CASCADE,
         related_name='inscripciones'
     )
+    # ---------------------------------
     estado = models.CharField(max_length=10, choices=ESTADO, default='inscrito')
     asistencia = models.CharField(max_length=10, choices=ASISTENCIA, default='pendiente')
     fec_registro = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('socio', 'clase')
+        unique_together = ('socio', 'taller')
+        # ---------------------------------
         ordering = ['-fec_registro']
-        verbose_name = "Inscripción a Clase"
-        verbose_name_plural = "Inscripciones a Clases"
+        verbose_name = "Inscripción a Taller"
+        verbose_name_plural = "Inscripciones a Talleres"
 
     def __str__(self):
-        return f"{self.socio} → {self.clase} ({self.estado})"
+
+        return f"{self.socio} → {self.taller} ({self.estado})"
+        # ---------------------------------
 
 
 # =========================================
@@ -77,9 +84,8 @@ class Cancha(models.Model):
     TIPO = (
         ('basket', 'Básquetbol'),
         ('volley', 'Vóleibol'),
-        ('futbol', 'Fútbol Sala'),
+        ('futbol', 'Fútbol'),
         ('tenis', 'Tenis'),
-        ('otro', 'Otro'),
     )
 
     nombre = models.CharField(max_length=100, unique=True)
@@ -135,3 +141,5 @@ class Reserva(models.Model):
     def title(self):
         """Usado por FullCalendar (muestra el socio y la cancha)."""
         return f"{self.socio.nombre} ({self.cancha.nombre})"
+    
+

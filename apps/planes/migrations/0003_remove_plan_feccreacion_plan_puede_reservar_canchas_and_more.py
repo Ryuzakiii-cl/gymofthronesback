@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='plan',
-            name='puede_reservar_clases',
+            name='puede_reservar_talleres',
             field=models.BooleanField(default=False),
         ),
         migrations.AlterField(

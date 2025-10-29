@@ -1,12 +1,14 @@
 {% extends 'users/base_dashboard.html' %}
 {% load static %}
-{% block title %}Calendario de Clases{% endblock %}
+{% block title %}Calendario de Talleres{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="fw-bold text-dark">🗓️ Calendario de Clases</h3>
-    <span class="badge px-3 py-2 text-dark border border-dark bg-warning">Inscribir Solo Planes Caballero - Rey • Cupos Limitados</span>
+    <h3 class="fw-bold text-dark">🗓️ Calendario de Talleres</h3>
+    <span class="badge px-3 py-2 text-dark border border-dark bg-warning">
+      Inscribir Solo Planes Caballero - Rey • Cupos Limitados
+    </span>
   </div>
 
   <div id="calendar" class="bg-white p-3 rounded shadow-sm"></div>
@@ -18,13 +20,13 @@
     <form id="formCrearClase" class="modal-content">
       {% csrf_token %}
       <div class="modal-header">
-        <h5 class="modal-title">Crear Clase</h5>
+        <h5 class="modal-title">Crear Taller</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
       </div>
       <div class="modal-body">
         <div class="row g-3">
           <div class="col-md-6">
-            <label class="form-label">Nombre de la clase</label>
+            <label class="form-label">Nombre del taller</label>
             <select class="form-select" name="nombre" required>
               <option value="Yoga">Yoga</option>
               <option value="Spinning">Spinning</option>
@@ -68,8 +70,8 @@
   <div class="modal-dialog modal-xl modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="detalleTitulo">Detalle de Clase</h5>
-        <button type="button" class="btn btn-outline-danger btn-sm" id="btnEliminarClase">Eliminar clase</button>
+        <h5 class="modal-title" id="detalleTitulo">Detalle del Taller</h5>
+        <button type="button" class="btn btn-outline-danger btn-sm ms-2" id="btnEliminarClase">Eliminar Taller</button>
         <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Cerrar"></button>
       </div>
       <div class="modal-body">
@@ -120,12 +122,26 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- FullCalendar al final para no interferir con el dashboard -->
+<!-- FullCalendar -->
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 
+<style>
+  #calendar {
+    min-height: 720px !important;
+    height: 100% !important;
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  }
+  .fc { --fc-border-color: #e9ecef; font-size: 0.95rem; }
+  .fc-toolbar-title { font-weight: 700; color: #222; }
+  .fc .fc-daygrid-day { height: 100px !important; }
+</style>
+
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+window.addEventListener('load', function() {
   const CSRF = document.querySelector('[name=csrfmiddlewaretoken]').value;
   const PROFESORES = {{ profesores|safe }};
   const SOCIOS = {{ socios|safe }};
@@ -159,6 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
     return '#6c757d';
   }
 
+  // --- FullCalendar ---
   const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
     initialView: 'timeGridWeek',
     locale: 'es',
@@ -168,21 +185,30 @@ document.addEventListener('DOMContentLoaded', function() {
     selectable: true,
     navLinks: true,
     headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
+
+    // ✅ Mostrar clases e inscripciones desde eventos_clases_json
     events: async (info, success, failure) => {
       try {
-        const res = await fetch("{% url 'api_clases' %}");
+        const res = await fetch("{% url 'eventos_talleres_json' %}");
         const data = await res.json();
-        const evs = data.clases.map(c => ({
-          id: c.id,
-          title: `${c.nombre} (${c.profesor})`,
-          start: `${c.fecha}T${c.hora_inicio}`,
-          end: `${c.fecha}T${c.hora_fin}`,
-          backgroundColor: colorPorNombre(c.nombre),
-          borderColor: colorPorNombre(c.nombre),
+
+        // Añadimos un id (necesario para eventClick)
+        const eventos = data.map((ev, i) => ({
+          id: ev.extendedProps?.id_clase || i,
+          title: ev.title,
+          start: ev.start,
+          end: ev.end,
+          color: ev.color,
+          extendedProps: ev.extendedProps
         }));
-        success(evs);
-      } catch (e) { failure(e); }
+
+        success(eventos);
+      } catch (e) {
+        console.error("Error cargando eventos:", e);
+        failure(e);
+      }
     },
+
     select: (arg) => {
       const start = new Date(arg.start); start.setMinutes(0,0,0);
       const end = new Date(start.getTime() + 60*60*1000);
@@ -192,9 +218,11 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('crearError').classList.add('d-none');
       modalCrear.show();
     },
+
+    // ✅ Mostrar detalle al hacer clic
     eventClick: async (info) => {
-      const id = info.event.id;
-      const r = await fetch(`{% url 'api_detalle_clase' 0 %}`.replace('0', id));
+      const id = info.event.extendedProps?.id_clase || info.event.id;
+      const r = await fetch(`{% url 'api_detalle_taller' 0 %}`.replace('0', id));
       const data = await r.json();
       if (!data.ok) return;
 
@@ -226,24 +254,38 @@ document.addEventListener('DOMContentLoaded', function() {
 
       document.getElementById('btnEliminarClase').dataset.id = c.id;
       document.getElementById('formInscribir').dataset.claseId = c.id;
-
-      const btnIns = document.getElementById('btnInscribir');
-      const err = document.getElementById('inscError');
-      if (c.inscritos >= c.cupos) {
-        btnIns.disabled = true;
-        err.classList.remove('d-none');
-        err.textContent = 'Cupos completos para esta clase.';
-      } else {
-        btnIns.disabled = false;
-        err.classList.add('d-none');
-        err.textContent = '';
-      }
-
       modalDetalle.show();
     }
   });
 
   calendar.render();
+
+  // === Crear clase desde el modal ===
+  document.getElementById('formCrearClase').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    try {
+      const res = await fetch("{% url 'api_crear_taller' %}", {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-CSRFToken': CSRF },
+      });
+      const data = await res.json();
+
+      if (data.ok) {
+        Swal.fire('✅ Clase creada correctamente', '', 'success');
+        modalCrear.hide();
+        setTimeout(() => calendar.refetchEvents(), 800);
+      } else {
+        Swal.fire('❌ Error', data.msg || 'No se pudo crear la clase', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      Swal.fire('❌ Error inesperado', '', 'error');
+    }
+  });
+
 });
 </script>
+
 {% endblock %}

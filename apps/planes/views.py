@@ -25,21 +25,32 @@ def crear_plan(request):
         descripcion = request.POST.get('descripcion', '')
         precio = request.POST['precio']
         duracion = request.POST['duracion']
+        puede_reservar_talleres  = request.POST.get('puede_reservar_talleres')  is not None  # o == '1'
+        puede_reservar_canchas = request.POST.get('puede_reservar_canchas') is not None
 
-        Plan.objects.create(nombre=nombre, descripcion=descripcion, precio=precio, duracion=duracion)
+        Plan.objects.create(
+            nombre=nombre, 
+            descripcion=descripcion, 
+            precio=precio, 
+            duracion=duracion,
+            puede_reservar_talleres=puede_reservar_talleres,
+            puede_reservar_canchas=puede_reservar_canchas,)
         return redirect('lista_planes')
     return render(request, 'planes/form_plan.html')
 
 
 @login_required
 @user_passes_test(es_admin_o_superadmin)
-def editar_plan(request, id):
-    plan = get_object_or_404(Plan, id=id)
+def editar_plan(request, plan_id):
+    plan = get_object_or_404(Plan, id=plan_id)
     if request.method == 'POST':
         plan.nombre = request.POST['nombre']
         plan.descripcion = request.POST.get('descripcion', '')
         plan.precio = request.POST['precio']
         plan.duracion = request.POST['duracion']
+        plan.puede_reservar_talleres  = request.POST.get('puede_reservar_talleres')  is not None
+        plan.puede_reservar_canchas = request.POST.get('puede_reservar_canchas') is not None
+
         plan.save()
         return redirect('lista_planes')
     return render(request, 'planes/form_plan.html', {'plan': plan})
@@ -47,8 +58,8 @@ def editar_plan(request, id):
 
 @login_required
 @user_passes_test(es_admin_o_superadmin)
-def eliminar_plan(request, id):
-    plan = get_object_or_404(Plan, id=id)
+def eliminar_plan(request, plan_id):
+    plan = get_object_or_404(Plan, id=plan_id)
     plan.delete()
     return redirect('lista_planes')
 
