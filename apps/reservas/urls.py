@@ -60,7 +60,11 @@ urlpatterns = [
     # ============================================================
     # ⚙️ API AJAX - RESERVAS DE CANCHAS
     # ============================================================
+# ---------- API AJAX (canchas) ----------
     path('api/reservas/crear/', views.crear_reserva_ajax, name='crear_reserva_ajax'),
-    path('api/reservas/editar/<int:reserva_id>/', views.editar_reserva_ajax, name='editar_reserva_ajax'),
-    path('api/reservas/eliminar/<int:reserva_id>/', views.eliminar_reserva_ajax, name='eliminar_reserva_ajax'),
+    path('editar/<int:reserva_id>/', views.editar_reserva_ajax, name='editar_reserva_ajax'),
+    path('eliminar/<int:reserva_id>/', views.eliminar_reserva_ajax, name='eliminar_reserva_ajax'),
+
 ]
+
+
