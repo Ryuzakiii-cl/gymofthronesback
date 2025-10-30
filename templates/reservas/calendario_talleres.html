@@ -14,7 +14,7 @@
   <div id="calendar" class="bg-white p-3 rounded shadow-sm"></div>
 </div>
 
-<!-- Modal Crear Clase -->
+<!-- Modal Crear/Editar Taller -->
 <div class="modal fade" id="modalCrearClase" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <form id="formCrearClase" class="modal-content">
@@ -65,12 +65,13 @@
   </div>
 </div>
 
-<!-- Modal Detalle Clase -->
+<!-- Modal Detalle Taller -->
 <div class="modal fade" id="modalDetalleClase" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title" id="detalleTitulo">Detalle del Taller</h5>
+        <button type="button" class="btn btn-outline-primary btn-sm ms-2" id="btnEditarClase">Editar Taller</button>
         <button type="button" class="btn btn-outline-danger btn-sm ms-2" id="btnEliminarClase">Eliminar Taller</button>
         <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Cerrar"></button>
       </div>
@@ -93,9 +94,6 @@
           </div>
           <div class="col-md-3">
             <button class="btn btn-dark text-warning w-100" id="btnInscribir">Inscribir</button>
-          </div>
-          <div class="col-md-12">
-            <div class="alert alert-warning d-none mt-2" id="inscError"></div>
           </div>
         </form>
 
@@ -122,16 +120,13 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- FullCalendar -->
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 
 <style>
   #calendar {
     min-height: 720px !important;
-    height: 100% !important;
     background-color: #fff;
     border-radius: 10px;
     padding: 10px;
@@ -167,98 +162,24 @@ window.addEventListener('load', function() {
   const modalCrear = new bootstrap.Modal(document.getElementById('modalCrearClase'));
   const modalDetalle = new bootstrap.Modal(document.getElementById('modalDetalleClase'));
 
-  function colorPorNombre(nombre) {
-    const n = (nombre || '').toLowerCase();
-    if (n.includes('yoga')) return '#5A8DEE';
-    if (n.includes('spinning')) return '#E7515A';
-    if (n.includes('baile')) return '#39DA8A';
-    if (n.includes('zumba')) return '#FFB547';
-    if (n.includes('funcional')) return '#9C27B0';
-    return '#6c757d';
-  }
-
   // --- FullCalendar ---
   const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
     initialView: 'dayGridMonth',
     locale: 'es',
     firstDay: 1,
-    slotDuration: '01:00:00',
-    slotMinTime: '08:00:00',
-    slotMaxTime: '22:00:00',
-    selectable: true,
-    navLinks: true,
     headerToolbar: {
-       left: 'prev,next today', 
-       center: 'title', 
-       right: 'dayGridMonth,timeGridWeek,timeGridDay' },
-
-    // ✅ Mostrar clases e inscripciones desde eventos_clases_json
-    events: async (info, success, failure) => {
-      try {
-        const res = await fetch("{% url 'eventos_talleres_json' %}");
-        const data = await res.json();
-
-        // Añadimos un id (necesario para eventClick)
-        const eventos = data.map((ev, i) => ({
-          id: ev.extendedProps?.id_clase || i,
-          title: ev.title,
-          start: ev.start,
-          end: ev.end,
-          color: ev.color,
-          extendedProps: ev.extendedProps
-        }));
-
-        success(eventos);
-      } catch (e) {
-        console.error("Error cargando eventos:", e);
-        failure(e);
-      }
+      left: 'prev,next today',
+      center: 'title',
+      right: 'dayGridMonth,timeGridWeek,timeGridDay'
     },
-
-    select: (arg) => {
-      const start = new Date(arg.start); start.setMinutes(0,0,0);
-      const end = new Date(start.getTime() + 60*60*1000);
-      document.getElementById('crearFecha').value = start.toISOString().slice(0,10);
-      document.getElementById('crearHoraIni').value = String(start.toTimeString().slice(0,5));
-      document.getElementById('crearHoraFin').value = String(end.toTimeString().slice(0,5));
-      document.getElementById('crearError').classList.add('d-none');
-      modalCrear.show();
-    },
-
-    // ✅ Mostrar detalle al hacer clic
+    events: "{% url 'eventos_talleres_json' %}",
     eventClick: async (info) => {
-      const id = info.event.extendedProps?.id_clase || info.event.id;
+      const id = info.event.extendedProps?.id_taller || info.event.id;
       const r = await fetch(`{% url 'api_detalle_taller' 0 %}`.replace('0', id));
       const data = await r.json();
       if (!data.ok) return;
-
-      const c = data.clase;
-      document.getElementById('detalleTitulo').textContent = c.nombre;
-      document.getElementById('detalleProfesor').textContent = c.profesor;
-      document.getElementById('detalleFecha').textContent = c.fecha;
-      document.getElementById('detalleHorario').textContent = `${c.hora_inicio} - ${c.hora_fin}`;
-      document.getElementById('detalleCupos').textContent = c.cupos;
-      document.getElementById('detalleInsc').textContent = c.inscritos;
-
-      const tbody = document.querySelector('#tablaInscritos tbody');
-      tbody.innerHTML = '';
-      c.alumnos.forEach(a => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${a.socio__nombre} ${a.socio__apellido_paterno || ''}</td>
-          <td>
-            <select class="form-select form-select-sm sel-asist" data-id="${a.id}">
-              <option value="pendiente" ${a.asistencia==='pendiente'?'selected':''}>Pendiente</option>
-              <option value="presente" ${a.asistencia==='presente'?'selected':''}>Presente</option>
-              <option value="ausente" ${a.asistencia==='ausente'?'selected':''}>Ausente</option>
-            </select>
-          </td>
-          <td><button class="btn btn-sm btn-outline-danger btn-del-insc" data-id="${a.id}">Eliminar</button></td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      document.getElementById('btnEliminarClase').dataset.id = c.id;
+      const c = data.taller;
+      actualizarDetalleTaller(c);
       document.getElementById('formInscribir').dataset.claseId = c.id;
       modalDetalle.show();
     }
@@ -266,46 +187,210 @@ window.addEventListener('load', function() {
 
   calendar.render();
 
-  // === Crear clase desde el modal ===
+  // === Crear o Editar taller ===
   document.getElementById('formCrearClase').addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
+    const idEditar = e.target.dataset.editarId;
+    const url = idEditar
+      ? `/reservas/api/talleres/${idEditar}/editar/`
+      : "{% url 'api_crear_taller' %}";
+
     try {
-      const res = await fetch("{% url 'api_crear_taller' %}", {
+      const res = await fetch(url, {
         method: 'POST',
         body: formData,
-        headers: { 'X-CSRFToken': CSRF },
+        headers: { 'X-CSRFToken': CSRF }
       });
       const data = await res.json();
-
       if (data.ok) {
         Swal.fire({
           icon: 'success',
-          title: '✅ Taller creado correctamente',
+          title: idEditar ? '✅ Taller actualizado correctamente' : '✅ Taller creado correctamente',
           timer: 1500,
           showConfirmButton: false
         });
-        
         modalCrear.hide();
-
-        // 🔁 Espera un poco más para garantizar que el servidor lo devuelva en /eventos_talleres_json
-        setTimeout(() => {
-          calendar.refetchEvents();
-          calendar.changeView('dayGridMonth');
-          calendar.gotoDate(new Date());
-        }, 1200);
+        delete e.target.dataset.editarId;
+        setTimeout(() => calendar.refetchEvents(), 800);
       } else {
-        Swal.fire('❌ Error', data.msg || 'No se pudo crear el taller', 'error');
+        Swal.fire('❌ Error', data.msg || 'No se pudo guardar el taller', 'error');
       }
-
-
     } catch (err) {
-      console.error(err);
-      Swal.fire('❌ Error inesperado', '', 'error');
+      Swal.fire('❌ Error inesperado', err.message, 'error');
+    }
+  });
+
+  // === Inscribir socio ===
+  document.getElementById('formInscribir').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const claseId = e.target.dataset.claseId;
+    const formData = new FormData(e.target);
+    try {
+      const res = await fetch(`/reservas/api/talleres/${claseId}/inscribir/`, {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-CSRFToken': CSRF }
+      });
+      const data = await res.json();
+      if (data.ok) {
+        Swal.fire('✅ Socio inscrito correctamente', '', 'success');
+        const r = await fetch(`/reservas/api/talleres/${claseId}/`);
+        const detalle = await r.json();
+        actualizarDetalleTaller(detalle.taller);
+      } else {
+        Swal.fire('❌ Error', data.msg || 'No se pudo inscribir al socio', 'error');
+      }
+    } catch (err) {
+      Swal.fire('❌ Error inesperado', err.message, 'error');
+    }
+  });
+
+// === EDITAR TALLER ===
+document.getElementById('btnEditarClase').addEventListener('click', async () => {
+  const id = document.getElementById('formInscribir').dataset.claseId;
+  if (!id) return;
+
+  try {
+    const r = await fetch(`/reservas/api/talleres/${id}/`);
+    const data = await r.json();
+    if (!data.ok) return Swal.fire('❌ Error', 'No se pudo cargar el taller', 'error');
+
+    const t = data.taller;
+
+    // Asegura que todos los elementos existen antes de modificar
+    const nombre = document.querySelector('[name=nombre]');
+    const cupos = document.querySelector('[name=cupos]');
+    const prof = document.querySelector('[name=profesor_id]');
+    const fecha = document.getElementById('crearFecha');
+    const horaIni = document.getElementById('crearHoraIni');
+    const horaFin = document.getElementById('crearHoraFin');
+    const modalTitle = document.querySelector('#modalCrearClase .modal-title');
+    const btnSubmit = document.querySelector('#modalCrearClase button[type="submit"]');
+
+    if (!nombre || !cupos || !prof || !fecha || !horaIni || !horaFin) {
+      console.error('❌ Error: no se encontraron campos del formulario.');
+      return;
+    }
+
+    nombre.value = t.nombre;
+    cupos.value = t.cupos;
+    prof.value = t.profesor_id;
+    fecha.value = t.fecha;
+    horaIni.value = t.hora_inicio;
+    horaFin.value = t.hora_fin;
+
+    document.getElementById('formCrearClase').dataset.editarId = id;
+    if (modalTitle) modalTitle.textContent = 'Editar Taller';
+    if (btnSubmit) btnSubmit.textContent = 'Guardar Cambios';
+
+    modalDetalle.hide();
+    setTimeout(() => modalCrear.show(), 300);
+  } catch (err) {
+    Swal.fire('❌ Error inesperado', err.message, 'error');
+  }
+});
+
+
+
+  // === ELIMINAR TALLER ===
+  document.getElementById('btnEliminarClase').addEventListener('click', async () => {
+    const id = document.getElementById('formInscribir').dataset.claseId;
+    if (!id) return;
+    const confirm = await Swal.fire({
+      title: '¿Eliminar taller?',
+      text: 'Se eliminarán también todas las inscripciones asociadas.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    });
+    if (confirm.isConfirmed) {
+      try {
+        const res = await fetch(`/reservas/api/talleres/${id}/eliminar/`, {
+          method: 'POST',
+          headers: { 'X-CSRFToken': CSRF }
+        });
+        const data = await res.json();
+        if (data.ok) {
+          Swal.fire('Eliminado', data.msg || 'Taller eliminado correctamente', 'success');
+          modalDetalle.hide();
+          setTimeout(() => calendar.refetchEvents(), 800);
+        } else {
+          Swal.fire('Error', data.msg || 'No se pudo eliminar el taller', 'error');
+        }
+      } catch (err) {
+        Swal.fire('Error inesperado', err.message, 'error');
+      }
+    }
+  });
+
+  // === Actualizar detalle de taller ===
+  function actualizarDetalleTaller(c) {
+    document.getElementById('detalleTitulo').textContent = c.nombre;
+    document.getElementById('detalleProfesor').textContent = c.profesor;
+    document.getElementById('detalleFecha').textContent = c.fecha;
+    document.getElementById('detalleHorario').textContent = `${c.hora_inicio} - ${c.hora_fin}`;
+    document.getElementById('detalleCupos').textContent = c.cupos;
+    document.getElementById('detalleInsc').textContent = c.inscritos;
+    const tbody = document.querySelector('#tablaInscritos tbody');
+    tbody.innerHTML = '';
+    c.alumnos.forEach(a => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${a.socio__nombre} ${a.socio__apellido_paterno || ''}</td>
+        <td>
+          <select class="form-select form-select-sm sel-asist" data-id="${a.id}">
+            <option value="pendiente" ${a.asistencia==='pendiente'?'selected':''}>Pendiente</option>
+            <option value="presente" ${a.asistencia==='presente'?'selected':''}>Presente</option>
+            <option value="ausente" ${a.asistencia==='ausente'?'selected':''}>Ausente</option>
+          </select>
+        </td>
+        <td><button class="btn btn-sm btn-outline-danger btn-del-insc" data-id="${a.id}">Eliminar</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // === Eliminar inscripción de socio ===
+  document.addEventListener('click', async (e) => {
+    if (e.target.classList.contains('btn-del-insc')) {
+      const id = e.target.dataset.id;
+      const claseId = document.getElementById('formInscribir').dataset.claseId;
+      const confirm = await Swal.fire({
+        title: '¿Eliminar inscripción?',
+        text: 'Esta acción no se puede deshacer.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+      });
+      if (confirm.isConfirmed) {
+        try {
+          const res = await fetch(`/reservas/api/inscripciones/${id}/eliminar/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': CSRF }
+          });
+          const data = await res.json();
+          if (data.ok) {
+            Swal.fire('Eliminado', data.msg || 'Inscripción eliminada correctamente', 'success');
+            const r = await fetch(`/reservas/api/talleres/${claseId}/`);
+            const detalle = await r.json();
+            actualizarDetalleTaller(detalle.taller);
+          } else {
+            Swal.fire('Error', data.msg || 'No se pudo eliminar la inscripción', 'error');
+          }
+        } catch (err) {
+          Swal.fire('Error inesperado', err.message, 'error');
+        }
+      }
     }
   });
 
 });
 </script>
-
 {% endblock %}

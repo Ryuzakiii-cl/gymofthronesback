@@ -1,3 +1,5 @@
+import json
+from django.core.serializers.json import DjangoJSONEncoder
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse
@@ -276,15 +278,17 @@ def calendario_canchas(request):
     canchas = Cancha.objects.filter(activo=True).order_by('nombre')
     return render(request, 'reservas/calendario_canchas.html', {'socios': socios, 'canchas': canchas})
 
+
 @login_required
 @user_passes_test(es_admin_o_superadmin)
-def calendario_talleres(request): 
+def calendario_talleres(request):
     profesores = list(Usuario.objects.filter(rol='profesor').values('id', 'nombre', 'apellido'))
     socios = list(Socio.objects.filter(estado=True).values('id', 'nombre', 'apellido_paterno'))
-    return render(request, 'reservas/calendario_talleres.html', { #Nombre de template
-        'profesores': profesores,
-        'socios': socios,
+    return render(request, 'reservas/calendario_talleres.html', {
+        'profesores': json.dumps(profesores, cls=DjangoJSONEncoder),
+        'socios': json.dumps(socios, cls=DjangoJSONEncoder),
     })
+
 
 
 # ---------- JSON para FullCalendar ----------
@@ -313,46 +317,28 @@ def eventos_canchas_json(request):
 
 
 @login_required
-def eventos_talleres_json(request): # Renombrada
-    """Devuelve talleres e inscripciones para el calendario de talleres."""
+def eventos_talleres_json(request):
+    """Devuelve solo los talleres activos para el calendario."""
     eventos = []
 
-    # --- Talleres base ---
-    for taller in Taller.objects.filter(activo=True): # Usar Taller
+    for taller in Taller.objects.filter(activo=True):
         eventos.append({
-            "id": taller.id_taller, # Usar id_taller
+            "id": taller.id_taller,
             "title": taller.nombre,
             "start": f"{taller.fecha}T{taller.hora_inicio}",
             "end": f"{taller.fecha}T{taller.hora_fin}",
             "color": "#007bff",  # azul = taller disponible
             "extendedProps": {
-                "tipo": "taller", # 'taller'
-                "id_taller": taller.id_taller, # id_taller
+                "tipo": "taller",
+                "id_taller": taller.id_taller,
                 "profesor": f"{taller.profesor.nombre} {getattr(taller.profesor, 'apellido', '')}".strip(),
                 "cupos": taller.cupos,
                 "inscritos": taller.inscritos_count(),
             }
         })
 
-    # --- Inscripciones de socios ---
-    # Usar InscripcionTaller y select_related('taller', 'socio')
-    inscripciones = InscripcionTaller.objects.select_related('taller', 'socio').filter(estado='inscrito') 
-    for insc in inscripciones:
-        eventos.append({
-            "id": f"insc-{insc.id}",
-            "title": f"{insc.socio.nombre} ({insc.taller.nombre})", # usar insc.taller
-            "start": f"{insc.taller.fecha}T{insc.taller.hora_inicio}", # usar insc.taller
-            "end": f"{insc.taller.fecha}T{insc.taller.hora_fin}", # usar insc.taller
-            "color": "#28a745",  # verde = reserva
-            "extendedProps": {
-                "tipo": "reserva",
-                "id_inscripcion": insc.id,
-                "socio": insc.socio.nombre,
-                "taller": insc.taller.nombre, # 'taller'
-            }
-        })
-
     return JsonResponse(eventos, safe=False)
+
 
 
 # ============================
@@ -413,18 +399,69 @@ def api_crear_taller(request):
         return JsonResponse({'ok': False, 'msg': str(e)}, status=400)
 
 
+# =====================================
+#   API EDITAR TALLER
+# =====================================
+from django.views.decorators.http import require_POST
+
+@login_required
+@user_passes_test(es_admin_o_superadmin)
+@require_POST
+def api_editar_taller(request, taller_id):
+    """Editar un taller existente desde el calendario."""
+    try:
+        taller = get_object_or_404(Taller, id_taller=taller_id)
+
+        nombre = request.POST.get('nombre')
+        profesor_id = request.POST.get('profesor_id')
+        cupos = request.POST.get('cupos')
+        fecha = request.POST.get('fecha')
+        hora_inicio = request.POST.get('hora_inicio')
+        hora_fin = request.POST.get('hora_fin')
+
+        # Validaciones básicas
+        if not all([nombre, profesor_id, cupos, fecha, hora_inicio, hora_fin]):
+            return JsonResponse({'ok': False, 'msg': 'Faltan datos para editar el taller.'}, status=400)
+
+        profesor = get_object_or_404(Usuario, id=profesor_id, rol='profesor')
+
+        # Validar choque de horario con otro taller del mismo profesor
+        conflicto = Taller.objects.filter(
+            profesor=profesor, fecha=fecha,
+            hora_inicio__lt=hora_fin, hora_fin__gt=hora_inicio
+        ).exclude(id_taller=taller_id).exists()
+
+        if conflicto:
+            return JsonResponse({'ok': False, 'msg': 'El profesor ya tiene un taller en ese horario.'}, status=400)
+
+        # Actualizar taller
+        taller.nombre = nombre
+        taller.profesor = profesor
+        taller.cupos = int(cupos)
+        taller.fecha = fecha
+        taller.hora_inicio = hora_inicio
+        taller.hora_fin = hora_fin
+        taller.save()
+
+        return JsonResponse({'ok': True, 'msg': 'Taller actualizado correctamente'})
+    except Exception as e:
+        return JsonResponse({'ok': False, 'msg': str(e)}, status=400)
+
+
 @login_required
 @user_passes_test(es_admin_o_superadmin)
 def api_detalle_taller(request, taller_id): 
-    """Devuelve detalle de un taller con los socios inscritos."""
-    taller = get_object_or_404(Taller, id_taller=taller_id) 
+    """Devuelve detalle de un taller con los socios inscritos (para el modal y edición)."""
+    taller = get_object_or_404(Taller, id_taller=taller_id)
     
     inscritos = taller.inscripciones.select_related('socio').filter(estado='inscrito').values(
         'id', 'socio_id', 'socio__nombre', 'socio__apellido_paterno', 'asistencia'
     )
+
     data = {
         'id': taller.id_taller,
         'nombre': taller.nombre,
+        'profesor_id': taller.profesor.id,  # 👈 CLAVE para llenar el selector
         'profesor': f"{taller.profesor.nombre} {getattr(taller.profesor, 'apellido', '')}".strip(),
         'cupos': taller.cupos,
         'inscritos': taller.inscritos_count(),
@@ -433,7 +470,10 @@ def api_detalle_taller(request, taller_id):
         'hora_fin': taller.hora_fin.strftime('%H:%M'),
         'alumnos': list(inscritos),
     }
-    return JsonResponse({'ok': True, 'taller': data}) 
+
+    return JsonResponse({'ok': True, 'taller': data})
+
+
 
 @login_required
 @user_passes_test(es_admin_o_superadmin)
@@ -501,6 +541,9 @@ def api_eliminar_inscripcion(request, insc_id):
     insc = get_object_or_404(InscripcionTaller, id=insc_id) 
     insc.delete()
     return JsonResponse({'ok': True, 'msg': 'Inscripción eliminada correctamente'})
+
+
+
 
 
 # ---- Canchas (AJAX creación desde modal)
