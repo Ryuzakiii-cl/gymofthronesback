@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
-from datetime import date, timedelta
+from django.utils import timezone  # ✅ reemplaza datetime.date
+from datetime import timedelta
 
 from apps.clientes.models import Socio
 from apps.planes.models import Plan, SocioPlan
@@ -57,7 +58,7 @@ def crear_socio(request):
 
         # Asignar plan y registrar pago
         plan = Plan.objects.get(id=plan_id)
-        fec_inicio = date.today()
+        fec_inicio = timezone.localdate()  # ✅ reemplaza date.today()
         fec_fin = fec_inicio + timedelta(days=plan.duracion)
 
         socio_plan = SocioPlan.objects.create(
@@ -91,14 +92,13 @@ def editar_socio(request, socio_id):
     socio = get_object_or_404(Socio, id=socio_id)
     planes = Plan.objects.all()
 
-    # Buscar el plan activo actual del socio
+    hoy = timezone.localdate()
     plan_actual = SocioPlan.objects.filter(
         socio=socio,
         estado=True,
-        fecFin__gte=date.today()
+        fecFin__gte=hoy
     ).order_by('-fecFin').first()
 
-    # Pasar plan activo al template
     socio.plan_actual_obj = plan_actual.plan if plan_actual else None
 
     if request.method == 'POST':
@@ -114,13 +114,12 @@ def editar_socio(request, socio_id):
         if nuevo_plan_id:
             nuevo_plan = Plan.objects.get(id=nuevo_plan_id)
 
-            # Si cambió el plan, cerramos el anterior y abrimos el nuevo
             if not plan_actual or nuevo_plan.id != plan_actual.plan.id:
                 if plan_actual:
                     plan_actual.estado = False
                     plan_actual.save()
 
-                fec_inicio = date.today()
+                fec_inicio = hoy
                 fec_fin = fec_inicio + timedelta(days=nuevo_plan.duracion)
 
                 SocioPlan.objects.create(

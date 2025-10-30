@@ -22,8 +22,10 @@ document.addEventListener('DOMContentLoaded', function() {
   const calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'timeGridWeek',
     locale: 'es',
-    slotMinTime: "06:00:00",
-    slotMaxTime: "23:00:00",
+    firstDay: 1, // 👉 1 = lunes
+    slotDuration: '01:00:00',
+    slotMinTime: '08:00:00',
+    slotMaxTime: '22:00:00',
     headerToolbar: {
       left: 'prev,next today',
       center: 'title',

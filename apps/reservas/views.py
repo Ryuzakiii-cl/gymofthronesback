@@ -1,4 +1,3 @@
-from datetime import datetime
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse
@@ -9,7 +8,6 @@ from django.db import IntegrityError
 from apps.users.models import Usuario
 from apps.clientes.models import Socio
 from apps.planes.models import SocioPlan
-# Modelos importados correctamente
 from .models import Taller, InscripcionTaller, Cancha, Reserva 
 
 
@@ -293,17 +291,25 @@ def calendario_talleres(request):
 
 @login_required
 def eventos_canchas_json(request):
-    """Eventos del calendario de canchas."""
     eventos = []
     reservas = Reserva.objects.filter(estado='confirmada').select_related('cancha', 'socio')
     for r in reservas:
         eventos.append({
+            "id": r.id,
             "title": f"{r.cancha.nombre} - {r.socio.nombre}",
             "start": f"{r.fecha}T{r.hora_inicio}",
             "end": f"{r.fecha}T{r.hora_fin}",
-            "color": "#ffc107"
+            "color": "#ffc107",
+            "extendedProps": {
+                "id": r.id,
+                "socio_id": r.socio.id,
+                "cancha_id": r.cancha.id,
+                "hora_inicio": str(r.hora_inicio),
+                "hora_fin": str(r.hora_fin)
+            }
         })
     return JsonResponse(eventos, safe=False)
+
 
 
 @login_required
@@ -525,3 +531,46 @@ def crear_reserva_ajax(request):
         hora_inicio=hora_inicio, hora_fin=hora_fin, estado='confirmada'
     )
     return JsonResponse({'status': 'success', 'message': 'Reserva creada correctamente.'})
+
+
+# ---- Editar reserva (AJAX)
+@login_required
+@user_passes_test(es_admin_o_superadmin)
+@require_POST
+def editar_reserva_ajax(request, reserva_id):
+    """Permite editar una reserva existente (desde el modal del calendario)."""
+    reserva = get_object_or_404(Reserva, id=reserva_id)
+    socio = get_object_or_404(Socio, id=request.POST.get('socio'))
+    cancha = get_object_or_404(Cancha, id=request.POST.get('cancha'))
+    fecha = request.POST.get('fecha')
+    hora_inicio = request.POST.get('hora_inicio')
+    hora_fin = request.POST.get('hora_fin')
+
+    # Validar solapamiento
+    solapa = Reserva.objects.filter(
+        cancha=cancha, fecha=fecha, estado__in=['pendiente', 'confirmada']
+    ).exclude(id=reserva.id).filter(
+        hora_inicio__lt=hora_fin, hora_fin__gt=hora_inicio
+    ).exists()
+    if solapa:
+        return JsonResponse({'status': 'error', 'message': 'Ya existe una reserva para esa cancha en ese horario.'}, status=400)
+
+    reserva.socio = socio
+    reserva.cancha = cancha
+    reserva.fecha = fecha
+    reserva.hora_inicio = hora_inicio
+    reserva.hora_fin = hora_fin
+    reserva.save()
+
+    return JsonResponse({'status': 'success', 'message': 'Reserva actualizada correctamente.'})
+
+
+# ---- Eliminar reserva (AJAX)
+@login_required
+@user_passes_test(es_admin_o_superadmin)
+@require_POST
+def eliminar_reserva_ajax(request, reserva_id):
+    """Permite eliminar una reserva desde el modal."""
+    reserva = get_object_or_404(Reserva, id=reserva_id)
+    reserva.delete()
+    return JsonResponse({'status': 'success', 'message': 'Reserva eliminada correctamente.'})

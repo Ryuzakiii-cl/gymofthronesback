@@ -1,9 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.utils import timezone  
+from datetime import timedelta
 from .models import Plan, SocioPlan
 from apps.clientes.models import Socio
-from datetime import datetime, timedelta
-
 
 
 def es_admin_o_superadmin(user):
@@ -25,16 +25,17 @@ def crear_plan(request):
         descripcion = request.POST.get('descripcion', '')
         precio = request.POST['precio']
         duracion = request.POST['duracion']
-        puede_reservar_talleres  = request.POST.get('puede_reservar_talleres')  is not None  # o == '1'
+        puede_reservar_talleres = request.POST.get('puede_reservar_talleres') is not None
         puede_reservar_canchas = request.POST.get('puede_reservar_canchas') is not None
 
         Plan.objects.create(
-            nombre=nombre, 
-            descripcion=descripcion, 
-            precio=precio, 
+            nombre=nombre,
+            descripcion=descripcion,
+            precio=precio,
             duracion=duracion,
             puede_reservar_talleres=puede_reservar_talleres,
-            puede_reservar_canchas=puede_reservar_canchas,)
+            puede_reservar_canchas=puede_reservar_canchas,
+        )
         return redirect('lista_planes')
     return render(request, 'planes/form_plan.html')
 
@@ -48,9 +49,8 @@ def editar_plan(request, plan_id):
         plan.descripcion = request.POST.get('descripcion', '')
         plan.precio = request.POST['precio']
         plan.duracion = request.POST['duracion']
-        plan.puede_reservar_talleres  = request.POST.get('puede_reservar_talleres')  is not None
+        plan.puede_reservar_talleres = request.POST.get('puede_reservar_talleres') is not None
         plan.puede_reservar_canchas = request.POST.get('puede_reservar_canchas') is not None
-
         plan.save()
         return redirect('lista_planes')
     return render(request, 'planes/form_plan.html', {'plan': plan})
@@ -73,8 +73,7 @@ def asignar_plan(request, socio_id):
     if request.method == 'POST':
         plan_id = request.POST['plan']
         monto_pagado = request.POST['monto_pagado']
-        fecInicio = datetime.now().date()
-
+        fecInicio = timezone.localdate()
         plan = Plan.objects.get(id=plan_id)
         fecFin = fecInicio + timedelta(days=plan.duracion)
 

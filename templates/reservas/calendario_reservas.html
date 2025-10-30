@@ -105,6 +105,10 @@ document.addEventListener('DOMContentLoaded', function() {
   const calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'timeGridWeek',
     locale: 'es',
+    firstDay: 1,
+    slotDuration: '01:00:00',
+    slotMinTime: '08:00:00',
+    slotMaxTime: '22:00:00',
     selectable: true,
     selectMirror: true,
     nowIndicator: true,

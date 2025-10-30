@@ -89,7 +89,7 @@ class Cancha(models.Model):
     )
 
     nombre = models.CharField(max_length=100, unique=True)
-    tipo = models.CharField(max_length=20, choices=TIPO, default='otro')
+    tipo = models.CharField(max_length=20, choices=TIPO, default='futbol')
     activo = models.BooleanField(default=True)
 
     class Meta:

@@ -20,6 +20,8 @@
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
         <div class="modal-body">
+          <input type="hidden" name="reserva_id" id="reserva_id">
+
           <div class="mb-3">
             <label class="form-label">Socio</label>
             <select name="socio" class="form-select" required>
@@ -56,12 +58,12 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
           <button type="submit" class="btn btn-warning">Guardar</button>
+          <button type="button" id="btnEliminar" class="btn btn-danger d-none">Eliminar</button>
         </div>
       </form>
     </div>
   </div>
 </div>
-
 {% endblock %}
 
 {% block extra_js %}
@@ -73,7 +75,6 @@
 <style>
   #calendar {
     min-height: 720px !important;
-    height: 100% !important;
     background-color: #fff;
     border-radius: 10px;
     padding: 10px;
@@ -89,37 +90,108 @@ window.addEventListener('load', function() {
   const calendarEl = document.getElementById('calendar');
   const modalEl = document.getElementById('modalReserva');
   const modal = new bootstrap.Modal(modalEl);
+  const form = document.getElementById('formReserva');
+  const btnEliminar = document.getElementById('btnEliminar');
 
+  // --- CALENDARIO ---
   const calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'dayGridMonth',
     locale: 'es',
+    firstDay: 1,
+    slotDuration: '01:00:00',
+    slotMinTime: '08:00:00',
+    slotMaxTime: '22:00:00',
     height: 'auto',
+    headerToolbar: {
+    left: 'prev,next today',
+    center: 'title',
+    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+    },
     events: "{% url 'eventos_canchas_json' %}",
+
+
+    // Crear reserva
     dateClick: function(info) {
+      form.reset();
+      document.getElementById('modalReservaLabel').textContent = "Nueva Reserva";
+      document.getElementById('reserva_id').value = '';
+      btnEliminar.classList.add('d-none');
       document.getElementById('fecha').value = info.dateStr;
+      modal.show();
+    },
+
+    // Editar reserva
+    eventClick: function(info) {
+      const e = info.event;
+      const p = e.extendedProps;
+
+      document.getElementById('modalReservaLabel').textContent = "Editar Reserva";
+      document.getElementById('reserva_id').value = p.id;
+      document.querySelector('[name=socio]').value = p.socio_id;
+      document.querySelector('[name=cancha]').value = p.cancha_id;
+      document.querySelector('[name=fecha]').value = e.startStr.split('T')[0];
+      document.querySelector('[name=hora_inicio]').value = p.hora_inicio.slice(0,5);
+      document.querySelector('[name=hora_fin]').value = p.hora_fin.slice(0,5);
+      btnEliminar.classList.remove('d-none');
+
       modal.show();
     }
   });
 
   calendar.render();
-  setTimeout(() => calendar.updateSize(), 300);
 
-  // Enviar formulario AJAX
-  document.getElementById('formReserva').addEventListener('submit', async function(e) {
+  // --- GUARDAR RESERVA ---
+  form.addEventListener('submit', async function(e) {
     e.preventDefault();
-    const formData = new FormData(this);
-    const response = await fetch("{% url 'crear_reserva_ajax' %}", {
+    const formData = new FormData(form);
+    const id = document.getElementById('reserva_id').value;
+    const url = id ? `/reservas/editar/${id}/` : "{% url 'crear_reserva_ajax' %}";
+
+    const response = await fetch(url, {
       method: "POST",
       body: formData,
       headers: { 'X-CSRFToken': '{{ csrf_token }}' }
     });
+
     const data = await response.json();
     if (data.status === 'success') {
       Swal.fire('✅ Éxito', data.message, 'success');
       modal.hide();
-      calendar.refetchEvents();
+      setTimeout(() => calendar.refetchEvents(), 500);
     } else {
-      Swal.fire('❌ Error', data.message, 'error');
+      Swal.fire('❌ Error', data.message || 'No se pudo guardar la reserva', 'error');
+    }
+  });
+
+  // --- ELIMINAR RESERVA ---
+  btnEliminar.addEventListener('click', async function() {
+    const id = document.getElementById('reserva_id').value;
+    if (!id) return;
+
+    const confirm = await Swal.fire({
+      title: '¿Eliminar reserva?',
+      text: 'Esta acción no se puede deshacer',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Sí, eliminar'
+    });
+
+    if (!confirm.isConfirmed) return;
+
+    const response = await fetch(`/reservas/eliminar/${id}/`, {
+      method: "POST",
+      headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+    });
+    const data = await response.json();
+
+    if (data.status === 'success') {
+      Swal.fire('🗑️ Eliminada', data.message, 'success');
+      modal.hide();
+      setTimeout(() => calendar.refetchEvents(), 500);
+    } else {
+      Swal.fire('❌ Error', data.message || 'No se pudo eliminar la reserva', 'error');
     }
   });
 });

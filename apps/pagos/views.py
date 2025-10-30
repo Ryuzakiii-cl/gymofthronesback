@@ -1,14 +1,16 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.utils import timezone  # ✅ agregado
 from .models import Pago
 from apps.clientes.models import Socio
 from apps.planes.models import Plan, SocioPlan
-from datetime import date
+
 
 # --- Permisos ---
 def es_admin_o_superadmin(user):
     return user.is_authenticated and user.rol in ['admin', 'superadmin']
+
 
 # --- LISTAR PAGOS ---
 @login_required
@@ -16,6 +18,7 @@ def es_admin_o_superadmin(user):
 def lista_pagos(request):
     pagos = Pago.objects.select_related('socio', 'plan').order_by('-fecha_pago')
     return render(request, 'pagos/lista_pagos.html', {'pagos': pagos})
+
 
 # --- CREAR PAGO ---
 @login_required
@@ -43,13 +46,14 @@ def crear_pago(request):
             forma_pago=forma_pago,
             observaciones=observaciones,
             estado='completado',
-            fecha_pago=date.today()
+            fecha_pago=timezone.localdate()  
         )
 
         messages.success(request, f"✅ Pago registrado correctamente para {socio.nombre}.")
         return redirect('lista_pagos')
 
     return render(request, 'pagos/crear_pago.html', {'socios': socios, 'planes': planes})
+
 
 # --- EDITAR PAGO ---
 @login_required
@@ -71,6 +75,7 @@ def editar_pago(request, pago_id):
         return redirect('lista_pagos')
 
     return render(request, 'pagos/editar_pago.html', {'pago': pago, 'socios': socios, 'planes': planes})
+
 
 # --- ELIMINAR PAGO ---
 @login_required

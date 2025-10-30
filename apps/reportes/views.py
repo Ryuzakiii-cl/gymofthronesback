@@ -1,14 +1,15 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Sum, Count
-from datetime import datetime, timedelta
+from django.utils import timezone 
+from datetime import timedelta
 from django.db.models.functions import TruncMonth
 from apps.clientes.models import Socio
 from apps.pagos.models import Pago
 from apps.reservas.models import Reserva, Taller, Cancha
 from apps.planes.models import Plan, SocioPlan
 import pandas as pd
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse
 
 
 def es_admin_o_superadmin(user):
@@ -18,14 +19,15 @@ def es_admin_o_superadmin(user):
 @login_required
 @user_passes_test(es_admin_o_superadmin)
 def dashboard_reportes(request):
-    hoy = datetime.today().date()
+    hoy = timezone.localdate()
     inicio_str = request.GET.get('inicio')
     fin_str = request.GET.get('fin')
     tipo = request.GET.get('tipo', 'socios')
 
     try:
-        inicio = datetime.strptime(inicio_str, "%Y-%m-%d").date() if inicio_str else hoy - timedelta(days=180)
-        fin = datetime.strptime(fin_str, "%Y-%m-%d").date() if fin_str else hoy
+
+        inicio = timezone.datetime.strptime(inicio_str, "%Y-%m-%d").date() if inicio_str else hoy - timedelta(days=180)
+        fin = timezone.datetime.strptime(fin_str, "%Y-%m-%d").date() if fin_str else hoy
     except ValueError:
         inicio, fin = hoy - timedelta(days=180), hoy
 
@@ -53,7 +55,9 @@ def dashboard_reportes(request):
     # --- Gráfico 2: ingresos por plan ---
     ingresos_por_plan = []
     for plan in planes:
-        total = Pago.objects.filter(plan=plan, estado='completado', fecha_pago__range=(inicio, fin)).aggregate(Sum('monto'))['monto__sum'] or 0
+        total = Pago.objects.filter(
+            plan=plan, estado='completado', fecha_pago__range=(inicio, fin)
+        ).aggregate(Sum('monto'))['monto__sum'] or 0
         ingresos_por_plan.append({'plan': plan.nombre, 'monto': total})
 
     # --- Gráfico 3: evolución mensual de socios ---
@@ -76,7 +80,7 @@ def dashboard_reportes(request):
         .order_by('mes')
     )
 
-    # Organizar datos en estructura para Chart.js
+    # Organizar datos para Chart.js
     series = {}
     for c in crecimiento:
         plan = c['plan__nombre']
@@ -121,7 +125,7 @@ def dashboard_reportes(request):
 @user_passes_test(es_admin_o_superadmin)
 def exportar_excel(request):
     tipo = request.GET.get('tipo', 'socios')
-    hoy = datetime.today().strftime("%Y-%m-%d")
+    hoy = timezone.localdate().strftime("%Y-%m-%d")  # ✅ usa timezone
 
     if tipo == 'socios':
         data = Socio.objects.values('rut', 'nombre', 'apellido_paterno', 'correo', 'estado')
