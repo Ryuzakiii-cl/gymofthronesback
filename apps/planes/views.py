@@ -77,7 +77,6 @@ def asignar_plan(request, socio_id):
         plan = Plan.objects.get(id=plan_id)
         fecFin = fecInicio + timedelta(days=plan.duracion)
 
-        # Desactivar plan anterior si existe
         SocioPlan.objects.filter(socio=socio, estado=True).update(estado=False)
 
         SocioPlan.objects.create(

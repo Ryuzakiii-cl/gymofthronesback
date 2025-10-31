@@ -10,6 +10,16 @@ from apps.reservas.models import Reserva, Taller, Cancha
 from apps.planes.models import Plan, SocioPlan
 import pandas as pd
 from django.http import HttpResponse
+import json
+from decimal import Decimal
+
+
+
+
+def decimal_default(obj):
+    if isinstance(obj, Decimal):
+        return float(obj)
+    raise TypeError
 
 
 def es_admin_o_superadmin(user):
@@ -110,13 +120,15 @@ def dashboard_reportes(request):
         'reservas_totales': reservas_totales,
         'talleres_activos': talleres_activos,
         'ocupacion': ocupacion,
-        'socios_por_plan': socios_por_plan,
-        'ingresos_por_plan': ingresos_por_plan,
-        'meses': meses,
-        'totales_mes': totales_mes,
-        'meses_crecimiento': meses_crecimiento,
-        'datasets_crecimiento': datasets_crecimiento,
+
+        'socios_por_plan': json.dumps(socios_por_plan, default=decimal_default),
+        'ingresos_por_plan': json.dumps(ingresos_por_plan, default=decimal_default),
+        'meses': json.dumps(meses, default=decimal_default),
+        'totales_mes': json.dumps(totales_mes, default=decimal_default),
+        'meses_crecimiento': json.dumps(meses_crecimiento, default=decimal_default),
+        'datasets_crecimiento': json.dumps(datasets_crecimiento, default=decimal_default),
     }
+
 
     return render(request, 'reportes/dashboard_reportes.html', context)
 
