@@ -2,6 +2,8 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.db import models
 from django.utils import timezone
 
+
+
 class UsuarioManager(BaseUserManager):
     def create_user(self, rut, password=None, **extra_fields):
         if not rut:
@@ -26,7 +28,7 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
         ('socio', 'Socio'),
     ]
 
-    rut = models.CharField(max_length=12, unique=True)
+    rut = models.CharField(max_length=12, unique=True,)
     nombre = models.CharField(max_length=50)
     apellido = models.CharField(max_length=50)
     correo = models.EmailField(unique=True)

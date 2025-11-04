@@ -1,0 +1,25 @@
+  body { background-color: #f8f9fa; }
+        .section-title {
+            background: #198754;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+        .card { border-radius: 12px; }
+        .form-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px 25px;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+        }
+        .form-label { font-weight: 600; }
+        .plan-summary {
+            background: #f0f8f5;
+            border: 1px solid #19875440;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-top: 10px;
+            font-size: 0.95rem;
+        }

@@ -4,7 +4,7 @@ from django.db import models
 class Plan(models.Model):
     nombre = models.CharField(max_length=100, unique=True)
     descripcion = models.TextField(blank=True, null=True)
-    precio = models.DecimalField(max_digits=10, decimal_places=2)
+    precio = models.IntegerField("Precio")
     duracion = models.PositiveIntegerField(help_text="Duración en días")
 
     # 🔹 Nuevos campos: control de acceso
@@ -29,11 +29,11 @@ class SocioPlan(models.Model):
         (False, 'Inactivo'),
     ]
 
-    socio = models.ForeignKey('clientes.Socio', on_delete=models.CASCADE, related_name='planes_asignados')
+    socio = models.ForeignKey('socios.Socio', on_delete=models.CASCADE, related_name='planes_asignados')
     plan = models.ForeignKey(Plan, on_delete=models.CASCADE)
     fecInicio = models.DateField()
     fecFin = models.DateField()
-    monto_pagado = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    monto_pagado = models.IntegerField("Monto Pagado")
     estado = models.BooleanField(choices=ESTADO_CHOICES, default=True)
 
     def __str__(self):

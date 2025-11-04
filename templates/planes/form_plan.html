@@ -1,8 +1,10 @@
-{% extends 'users/base_dashboard.html' %}
+{% extends 'core/base_dashboard.html' %}
+{% load static %}
+
 {% block title %}{% if plan %}Editar Plan{% else %}Nuevo Plan{% endif %}{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container mt-4">
   <h3 class="fw-bold text-center mb-4">
     {% if plan %}✏️ Editar Plan{% else %}🧾 Registrar Nuevo Plan{% endif %}
   </h3>
@@ -33,19 +35,14 @@
       </div>
       <div class="col-md-4">
         <label class="form-label d-block">Permisos</label>
-
-        <!-- ✅ talleres -->
         <div class="form-check">
           <input id="perm_talleres" type="checkbox" name="puede_reservar_talleres" value="1"
-                 class="form-check-input"
-                 {% if plan and plan.puede_reservar_talleres %}checked{% endif %}>
+                 class="form-check-input" {% if plan and plan.puede_reservar_talleres %}checked{% endif %}>
           <label class="form-check-label" for="perm_talleres">Puede reservar clases/talleres</label>
         </div>
-
         <div class="form-check">
           <input id="perm_canchas" type="checkbox" name="puede_reservar_canchas" value="1"
-                 class="form-check-input"
-                 {% if plan and plan.puede_reservar_canchas %}checked{% endif %}>
+                 class="form-check-input" {% if plan and plan.puede_reservar_canchas %}checked{% endif %}>
           <label class="form-check-label" for="perm_canchas">Puede reservar canchas</label>
         </div>
       </div>
@@ -57,4 +54,9 @@
     </div>
   </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{% static 'js/planes/form_plan.js' %}"></script>
 {% endblock %}

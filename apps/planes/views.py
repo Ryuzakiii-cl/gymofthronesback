@@ -3,18 +3,32 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils import timezone  
 from datetime import timedelta
 from .models import Plan, SocioPlan
-from apps.clientes.models import Socio
+from apps.socios.models import Socio
 
 
 def es_admin_o_superadmin(user):
     return user.is_authenticated and (user.rol == 'admin' or user.rol == 'superadmin')
 
 
+def formatear_numero(valor):
+    """Convierte número a formato chileno: 1.234.567"""
+    try:
+        return f"{int(valor):,}".replace(",", ".")
+    except (TypeError, ValueError):
+        return "0"
+
+
 @login_required
 @user_passes_test(es_admin_o_superadmin)
 def lista_planes(request):
     planes = Plan.objects.all().order_by('precio')
+
+    # Aplica formato chileno al precio
+    for p in planes:
+        p.precio_formateado = formatear_numero(p.precio)
+
     return render(request, 'planes/lista_planes.html', {'planes': planes})
+
 
 
 @login_required
@@ -36,7 +50,7 @@ def crear_plan(request):
             puede_reservar_talleres=puede_reservar_talleres,
             puede_reservar_canchas=puede_reservar_canchas,
         )
-        return redirect('lista_planes')
+        return redirect('/planes/?success=created')
     return render(request, 'planes/form_plan.html')
 
 
@@ -52,7 +66,7 @@ def editar_plan(request, plan_id):
         plan.puede_reservar_talleres = request.POST.get('puede_reservar_talleres') is not None
         plan.puede_reservar_canchas = request.POST.get('puede_reservar_canchas') is not None
         plan.save()
-        return redirect('lista_planes')
+        return redirect('/planes/?success=updated')
     return render(request, 'planes/form_plan.html', {'plan': plan})
 
 

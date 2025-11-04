@@ -1,0 +1,101 @@
+document.addEventListener("DOMContentLoaded", () => {
+  const params = new URLSearchParams(window.location.search);
+  const success = params.get("success");
+  const error = params.get("error");
+
+  // ✅ Mensajes de éxito
+  if (success) {
+    let config = {
+      icon: "success",
+      confirmButtonColor: "#212529",
+      confirmButtonText: "Aceptar",
+      customClass: { popup: "rounded-4 shadow-lg" },
+    };
+
+    switch (success) {
+      case "created":
+        config.title = "✅ Usuario creado correctamente";
+        config.text = "El nuevo usuario ha sido registrado en el sistema.";
+        break;
+      case "updated":
+        config.title = "✏️ Usuario actualizado correctamente";
+        config.text = "Los datos del usuario se modificaron con éxito.";
+        break;
+      case "deleted":
+        config.title = "🗑️ Usuario eliminado";
+        config.text = "El usuario ha sido eliminado del sistema.";
+        break;
+      case "logout":
+        config.title = "👋 Sesión cerrada correctamente";
+        config.text = "Hasta pronto.";
+        break;
+      default:
+        config = null;
+    }
+
+    if (config) {
+      Swal.fire(config).then(() => {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      });
+    }
+  }
+
+  // ⚠️ Mensajes de error
+  if (error) {
+    let config = {
+      icon: "error",
+      confirmButtonColor: "#d33",
+      confirmButtonText: "Aceptar",
+      customClass: { popup: "rounded-4 shadow-lg" },
+    };
+
+    switch (error) {
+      case "exists":
+        config.title = "⚠️ Usuario ya existente";
+        config.text = "Ya hay un usuario registrado con ese RUT.";
+        config.icon = "warning";
+        break;
+      case "invalid":
+        config.title = "❌ RUT o contraseña incorrectos";
+        config.text = "Verifica tus credenciales e intenta nuevamente.";
+        break;
+      case "sinrol":
+        config.title = "🚫 Sin rol asignado";
+        config.text = "Tu cuenta no tiene un rol asignado. Contacta al administrador.";
+        break;
+      default:
+        config = null;
+    }
+
+    if (config) {
+      Swal.fire(config).then(() => {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      });
+    }
+  }
+
+  // 🗑️ Confirmar eliminación de usuario
+  document.querySelectorAll(".eliminar-usuario").forEach((boton) => {
+    boton.addEventListener("click", (e) => {
+      e.preventDefault();
+      const url = boton.getAttribute("href");
+
+      Swal.fire({
+        title: "¿Eliminar usuario?",
+        text: "Esta acción no se puede deshacer.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#6c757d",
+        confirmButtonText: "Sí, eliminar",
+        cancelButtonText: "Cancelar",
+        reverseButtons: true,
+        customClass: { popup: "rounded-4 shadow-lg" },
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = url;
+        }
+      });
+    });
+  });
+});

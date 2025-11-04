@@ -1,9 +1,14 @@
-{% extends 'users/base_dashboard.html' %}
+{% extends 'core/base_dashboard.html' %}
+{% load static %}
 {% block title %}Pagos{% endblock %}
+
 {% block content %}
 <div class="container mt-3">
-  <h3 class="fw-bold mb-3">💳 Lista de Pagos</h3>
-  <a href="{% url 'crear_pago' %}" class="btn btn-dark text-warning mb-3">+ Nuevo Pago</a>
+<div class="d-flex justify-content-between align-items-center mb-3">
+<h3 class="fw-bold">💳 Lista de Pagos</h3>
+<a href="{% url 'crear_pago' %}" class="btn btn-dark text-warning fw-bold">+ Nuevo Pago</a>
+</div>
+
 
   <table class="table table-striped table-bordered align-middle">
     <thead class="table-dark">
@@ -21,13 +26,13 @@
         <tr>
           <td>{{ p.socio.nombre }} {{ p.socio.apellido_paterno }}</td>
           <td>{{ p.plan.nombre }}</td>
-          <td>${{ p.monto }}</td>
+          <td>${{ p.monto_formateado }}</td>
           <td>{{ p.forma_pago }}</td>
           <td>{{ p.fecha_pago }}</td>
           <td>
             <a href="{% url 'editar_pago' p.id %}" class="btn btn-sm btn-outline-dark">✏️</a>
-            <a href="{% url 'eliminar_pago' p.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Seguro que deseas eliminar este pago?')"
- >🗑️</a>
+            <button type="button" class="btn btn-sm btn-outline-danger"
+                    onclick="confirmarEliminacion('{{ p.id }}')">🗑️</button>
           </td>
         </tr>
       {% empty %}
@@ -36,4 +41,9 @@
     </tbody>
   </table>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{% static 'js/pagos/pagos_list.js' %}"></script>
 {% endblock %}

@@ -1,0 +1,85 @@
+{% extends 'core/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Registrar Nuevo Socio{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/clientes/crear_socio.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h3 class="fw-bold mb-4">🧾 Registrar Nuevo Socio</h3>
+
+  <form method="POST" class="card p-4 shadow-sm">
+    {% csrf_token %}
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <label class="form-label">RUT</label>
+        <input type="text" name="rut" class="form-control" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Nombre</label>
+        <input type="text" name="nombre" class="form-control" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Apellido Paterno</label>
+        <input type="text" name="apellido_paterno" class="form-control" required>
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <label class="form-label">Apellido Materno</label>
+        <input type="text" name="apellido_materno" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Correo</label>
+        <input type="email" name="correo" class="form-control" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Teléfono</label>
+        <input type="text" name="telefono" class="form-control">
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label class="form-label">Fecha de nacimiento</label>
+        <input type="date" name="fecNac" class="form-control">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Plan</label>
+        <select name="plan" id="plan" class="form-select" required>
+          <option value="">-- Seleccionar --</option>
+          {% for plan in planes %}
+            <option value="{{ plan.id }}" data-precio="{{ plan.precio }}" data-duracion="{{ plan.duracion }}" data-beneficios="{{ plan.descripcion }}">
+              {{ plan.nombre }} (${{ plan.precio }})
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label class="form-label">Forma de pago</label>
+        <select name="forma_pago" class="form-select">
+          <option value="efectivo">Efectivo</option>
+          <option value="tarjeta">Tarjeta</option>
+          <option value="transferencia">Transferencia</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="text-end">
+      <button type="submit" class="btn btn-dark text-warning fw-bold">Registrar</button>
+      <a href="{% url 'lista_socios' %}" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/socios/crear_socio.js' %}"></script>
+{% endblock %}

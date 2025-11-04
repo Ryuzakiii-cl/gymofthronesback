@@ -1,47 +1,83 @@
-{% extends 'users/base_dashboard.html' %}
-{% block title %}Gestión de Usuarios{% endblock %}
-{% block content %}
-<div class="container mt-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="fw-bold">👥 Gestión de Usuarios</h3>
-    <a href="{% url 'crear_usuario' %}" class="btn btn-dark text-warning fw-bold">➕ Crear Usuario</a>
-  </div>
+{% extends 'core/base_dashboard.html' %}
+{% load static %}
 
-  <table class="table table-striped table-bordered align-middle shadow-sm">
-    <thead class="table-dark text-warning">
-      <tr>
-        <th>RUT</th>
-        <th>Nombre</th>
-        <th>Correo</th>
-        <th>Rol</th>
-        <th>Estado</th>
-        <th class="text-center">Acciones</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for u in usuarios %}
-      <tr>
-        <td>{{ u.rut }}</td>
-        <td>{{ u.nombre }} {{ u.apellido }}</td>
-        <td>{{ u.correo }}</td>
-        <td><span class="badge bg-secondary">{{ u.get_rol_display }}</span></td>
-        <td>
-          {% if u.is_active %}
-            <span class="badge bg-success">Activo</span>
-          {% else %}
-            <span class="badge bg-danger">Inactivo</span>
-          {% endif %}
-        </td>
-        <td class="text-center">
-          <a href="{% url 'editar_usuario' u.id %}" class="btn btn-sm btn-outline-dark">✏️</a>
-          <a href="{% url 'eliminar_usuario' u.id %}" class="btn btn-sm btn-outline-danger"
-             onclick="return confirm('¿Eliminar este usuario?')">🗑️</a>
-        </td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="6" class="text-center">No hay usuarios registrados.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+{% block title %}Usuarios{% endblock %}
+
+{% block content %}
+<div class="container mt-3">
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="fw-bold text-dark">👤 Lista de Usuarios</h3>
+  <div class="d-flex gap-2">
+    <form action="{% url 'carga_usuarios' %}" method="POST" enctype="multipart/form-data" id="formCarga">
+      {% csrf_token %}
+      <label class="btn btn-outline-dark fw-bold mb-0">
+        ⬆️ Cargar Archivo
+        <input type="file" name="archivo" accept=".xlsx,.xls,.csv" hidden onchange="document.getElementById('formCarga').submit();">
+      </label>
+    </form>
+    <a href="{% url 'crear_usuario' %}" class="btn btn-dark text-warning fw-bold">
+      + Nuevo Usuario
+    </a>
+  </div>
 </div>
+
+
+  <div class="table-responsive">
+    <table class="table table-striped align-middle shadow-sm">
+      <thead class="table-dark">
+        <tr>
+          <th>RUT</th>
+          <th>Nombre</th>
+          <th>Correo</th>
+          <th>Rol</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for usuario in usuarios %}
+        <tr>
+          <td>{{ usuario.rut_formateado }}</td>
+
+          <td>{{ usuario.nombre }} {{ usuario.apellido }}</td>
+          <td>{{ usuario.correo }}</td>
+          <td class="text-capitalize">{{ usuario.rol }}</td>
+          <td>
+            {% if usuario.is_active %}
+              <span class="badge bg-success">Activo</span>
+            {% else %}
+              <span class="badge bg-secondary">Inactivo</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{% url 'editar_usuario' usuario.id %}" class="btn btn-sm btn-outline-dark">✏️</a>
+            <a href="{% url 'eliminar_usuario' usuario.id %}" class="btn btn-sm btn-outline-danger eliminar-usuario">🗑️</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center">No hay usuarios registrados.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+
+{% if messages %}
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    {% for msg in messages %}
+      Swal.fire({
+        icon: '{{ msg.tags }}' === 'error' ? 'error' : 'success',
+        title: '{{ msg|escapejs }}',
+        confirmButtonColor: '#111',
+      });
+    {% endfor %}
+  </script>
+{% endif %}
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="{% static 'js/users/lista_usuarios.js' %}"></script>
 {% endblock %}

@@ -1,12 +1,14 @@
-
-{% extends 'users/base_dashboard.html' %}
+{% extends 'core/base_dashboard.html' %}
+{% load static %}
+{% load humanize %}
 {% block title %}Planes{% endblock %}
+
 {% block content %}
-<div class="container">
-  <h3 class="fw-bold mb-3 text-dark">📋 Lista de Planes</h3>
-  <div class="text-end mb-3">
-    <a href="{% url 'crear_plan' %}" class="btn btn-dark text-warning">+ Nuevo Plan</a>
-  </div>
+<div class="container mt-3">
+<div class="d-flex justify-content-between align-items-center mb-3">
+<h3 class="fw-bold">📋 Lista de Planes</h3>
+<a href="{% url 'crear_plan' %}" class="btn btn-dark text-warning fw-bold">+ Nuevo Plan</a>
+</div>
 
   <table class="table table-striped table-bordered align-middle shadow-sm">
     <thead class="table-dark">
@@ -24,14 +26,14 @@
       {% for plan in planes %}
       <tr>
         <td>{{ plan.nombre }}</td>
-        <td>{{ plan.descripcion|default:"-" }}</td>
-        <td>${{ plan.precio }}</td>
+        <td>{{ plan.descripcion }}</td>
+        <td>${{ plan.precio_formateado }}</td>
         <td>{{ plan.duracion }} días</td>
         <td>{% if plan.puede_reservar_talleres %}✅{% else %}❌{% endif %}</td>
         <td>{% if plan.puede_reservar_canchas %}✅{% else %}❌{% endif %}</td>
         <td>
           <a href="{% url 'editar_plan' plan.id %}" class="btn btn-sm btn-outline-dark">✏️</a>
-          <a href="{% url 'eliminar_plan' plan.id %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar este plan?');">🗑️</a>
+          <a href="{% url 'eliminar_plan' plan.id %}" class="btn btn-sm btn-outline-danger eliminar-plan">🗑️</a>
         </td>
       </tr>
       {% empty %}
@@ -41,3 +43,9 @@
   </table>
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{% static 'js/planes/lista_planes.js' %}"></script>
+{% endblock %}
+

@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils import timezone  # ✅ agregado
 from .models import Pago
-from apps.clientes.models import Socio
+from apps.socios.models import Socio
 from apps.planes.models import Plan, SocioPlan
 
 
@@ -12,12 +12,27 @@ def es_admin_o_superadmin(user):
     return user.is_authenticated and user.rol in ['admin', 'superadmin']
 
 
+
+def formatear_numero(valor):
+    """Convierte número a formato chileno: 1.234.567"""
+    try:
+        return f"{int(valor):,}".replace(",", ".")
+    except (TypeError, ValueError):
+        return "0"
+
+
 # --- LISTAR PAGOS ---
 @login_required
 @user_passes_test(es_admin_o_superadmin)
 def lista_pagos(request):
     pagos = Pago.objects.select_related('socio', 'plan').order_by('-fecha_pago')
+
+    # Formatea el monto con separador de miles
+    for p in pagos:
+        p.monto_formateado = formatear_numero(p.monto)
+
     return render(request, 'pagos/lista_pagos.html', {'pagos': pagos})
+
 
 
 # --- CREAR PAGO ---
@@ -49,8 +64,7 @@ def crear_pago(request):
             fecha_pago=timezone.localdate()  
         )
 
-        messages.success(request, f"✅ Pago registrado correctamente para {socio.nombre}.")
-        return redirect('lista_pagos')
+        return redirect('/pagos/?success=created')
 
     return render(request, 'pagos/crear_pago.html', {'socios': socios, 'planes': planes})
 
@@ -71,8 +85,7 @@ def editar_pago(request, pago_id):
         pago.observaciones = request.POST.get('observaciones')
         pago.save()
 
-        messages.success(request, "✅ Pago actualizado correctamente.")
-        return redirect('lista_pagos')
+        return redirect('/pagos/?success=updated')
 
     return render(request, 'pagos/editar_pago.html', {'pago': pago, 'socios': socios, 'planes': planes})
 
@@ -83,5 +96,4 @@ def editar_pago(request, pago_id):
 def eliminar_pago(request, pago_id):
     pago = get_object_or_404(Pago, id=pago_id)
     pago.delete()
-    messages.success(request, "🗑️ Pago eliminado correctamente.")
-    return redirect('lista_pagos')
+    return redirect('/pagos/?success=deleted')

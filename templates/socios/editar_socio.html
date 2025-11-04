@@ -1,0 +1,66 @@
+{% extends 'core/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Editar Socio{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/clientes/editar_socio.css' %}">
+{% endblock %}
+
+{% block content %}
+  <div class="container mt-4">
+    <h3 class="fw-bold mb-4">✏️ Editar Socio</h3>
+
+    <form method="POST" class="card p-4 shadow-sm">
+      {% csrf_token %}
+  <div class="row mb-3">
+    <div class="col-md-4">
+      <label class="form-label">RUT</label>
+      <input type="text" name="rut" class="form-control"
+            value="{{ socio.rut }}" placeholder="Ej: 12345678-9" required>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Nombre</label>
+      <input type="text" name="nombre" class="form-control" value="{{ socio.nombre }}" required>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Apellido Paterno</label>
+      <input type="text" name="apellido_paterno" class="form-control" value="{{ socio.apellido_paterno }}" required>
+    </div>
+  </div>
+
+
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label class="form-label">Correo</label>
+        <input type="email" name="correo" class="form-control" value="{{ socio.correo }}" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Teléfono</label>
+        <input type="text" name="telefono" class="form-control" value="{{ socio.telefono }}">
+      </div>
+      
+    </div>
+<div class="form-check mb-3">
+  <input type="checkbox" class="form-check-input" id="estado" name="estado"
+         {% if socio.estado %}checked{% endif %}>
+  <label class="form-check-label" for="estado">Socio activo</label>
+</div>
+
+    {% if socio.plan_actual %}
+      <div class="alert alert-info mt-3">
+        <strong>Plan actual:</strong> {{ socio.plan_actual|safe }}
+      </div>
+    {% endif %}
+
+    <div class="text-end mt-3">
+      <button type="submit" class="btn btn-dark text-warning fw-bold">Guardar Cambios</button>
+      <a href="{% url 'lista_socios' %}" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/socios/editar_socio.js' %}"></script>
+{% endblock %}

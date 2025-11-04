@@ -1,0 +1,44 @@
+{% extends 'core/base_dashboard.html' %}
+{% block title %}{% if cancha %}Editar Cancha{% else %}Nueva Cancha{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="col-lg-6 mx-auto card shadow p-4">
+    <h3 class="fw-bold mb-3 text-center">
+      {% if cancha %}✏️ Editar Cancha{% else %}➕ Nueva Cancha{% endif %}
+    </h3>
+
+    <form method="POST">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Nombre</label>
+        <input type="text" name="nombre" class="form-control" value="{{ cancha.nombre|default:'' }}" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Tipo</label>
+        <select name="tipo" class="form-select" required>
+          <option value="basket" {% if cancha and cancha.tipo == 'basket' %}selected{% endif %}>Básquetbol</option>
+          <option value="volley" {% if cancha and cancha.tipo == 'volley' %}selected{% endif %}>Vóleibol</option>
+          <option value="futbol" {% if cancha and cancha.tipo == 'futbol' %}selected{% endif %}>Fútbol</option>
+          <option value="tenis" {% if cancha and cancha.tipo == 'tenis' %}selected{% endif %}>Tenis</option>
+        </select>
+      </div>
+
+      <div class="form-check mb-3">
+        <input type="checkbox" name="activo" class="form-check-input" {% if not cancha or cancha.activo %}checked{% endif %}>
+        <label class="form-check-label">Activa</label>
+      </div>
+
+      <div class="text-end">
+        <a href="{% url 'canchas_list' %}" class="btn btn-outline-secondary">
+          <i class="ph ph-arrow-left"></i> Volver
+        </a>
+        <button class="btn btn-dark text-warning fw-semibold" type="submit">
+          💾 Guardar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

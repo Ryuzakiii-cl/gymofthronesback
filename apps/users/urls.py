@@ -15,5 +15,6 @@ urlpatterns = [
     path('usuarios/nuevo/', views.crear_usuario, name='crear_usuario'),
     path('usuarios/editar/<int:user_id>/', views.editar_usuario, name='editar_usuario'),
     path('usuarios/eliminar/<int:user_id>/', views.eliminar_usuario, name='eliminar_usuario'),
+    path('cargar/', views.carga_usuarios, name='carga_usuarios'),
 
 ]

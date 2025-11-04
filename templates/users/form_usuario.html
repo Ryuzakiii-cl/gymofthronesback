@@ -1,4 +1,4 @@
-{% extends 'users/base_dashboard.html' %}
+{% extends 'core/base_dashboard.html' %}
 {% block title %}{{ titulo }}{% endblock %}
 {% block content %}
 <div class="container mt-4">
@@ -7,23 +7,37 @@
   <form method="POST" class="card p-4 shadow-sm">
     {% csrf_token %}
     <div class="row g-3">
+      <!-- 🆔 RUT -->
       <div class="col-md-4">
         <label class="form-label">RUT</label>
-        <input type="text" name="rut" value="{{ usuario.rut|default:'' }}" class="form-control" {% if usuario %}readonly{% endif %} required>
+        <input 
+          type="text" 
+          name="rut" 
+          value="{{ usuario.rut|default:'' }}" 
+          class="form-control" 
+          placeholder="Ej: 12345678-9"
+          required>
       </div>
+
+      <!-- 👤 Nombre -->
       <div class="col-md-4">
         <label class="form-label">Nombre</label>
         <input type="text" name="nombre" value="{{ usuario.nombre|default:'' }}" class="form-control" required>
       </div>
+
+      <!-- 👥 Apellido -->
       <div class="col-md-4">
         <label class="form-label">Apellido</label>
         <input type="text" name="apellido" value="{{ usuario.apellido|default:'' }}" class="form-control" required>
       </div>
+
+      <!-- 📧 Correo -->
       <div class="col-md-6">
         <label class="form-label">Correo</label>
         <input type="email" name="correo" value="{{ usuario.correo|default:'' }}" class="form-control" required>
       </div>
 
+      <!-- 🧩 Rol -->
       <div class="col-md-3">
         <label class="form-label">Rol</label>
         <select name="rol" class="form-select" required>
@@ -35,11 +49,11 @@
             <option value="superadmin">Super Administrador</option>
             <option value="admin">Administrador</option>
             <option value="profesor">Profesor</option>
-            <option value="socio">Socio</option>
           {% endif %}
         </select>
       </div>
 
+      <!-- 🔐 Contraseña solo si es nuevo -->
       {% if not usuario %}
       <div class="col-md-3">
         <label class="form-label">Contraseña</label>
@@ -47,6 +61,7 @@
       </div>
       {% endif %}
 
+      <!-- 🟢 Estado activo solo si ya existe -->
       {% if usuario %}
       <div class="col-md-3">
         <div class="form-check mt-4">
@@ -57,6 +72,7 @@
       {% endif %}
     </div>
 
+    <!-- Botones -->
     <div class="text-end mt-4">
       <button type="submit" class="btn btn-dark text-warning fw-bold">Guardar</button>
       <a href="{% url 'lista_usuarios' %}" class="btn btn-outline-secondary">Cancelar</a>

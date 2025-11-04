@@ -1,40 +1,16 @@
-{% extends 'users/base_dashboard.html' %}
+{% extends 'core/base_dashboard.html' %}
+{% load static %}
 {% load humanize %}
 
 {% block title %}Reportes y Finanzas{% endblock %}
 
 {% block content %}
-<style>
-  .export-btn {
-    background-color: #198754;
-    border: none;
-    transition: all 0.2s ease-in-out;
-  }
-  .export-btn:hover {
-    background-color: #157347;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-  }
-  .export-btn i { color: #fff; }
-
-  .btn-dark {
-    background-color: #111;
-    border: none;
-    transition: all 0.2s ease-in-out;
-  }
-  .btn-dark:hover {
-    background-color: #ffc107;
-    color: #111 !important;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-  }
-</style>
+<link rel="stylesheet" href="{% static 'css/reportes/dashboard_reportes.css' %}">
 
 <div class="container-fluid">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="fw-bold text-dark">📊 Panel de Reportes y Finanzas</h3>
 
-    <!-- FILTROS -->
     <form method="get" class="d-flex gap-2 align-items-center">
       <input type="date" name="inicio" value="{{ inicio|date:'Y-m-d' }}" class="form-control">
       <input type="date" name="fin" value="{{ fin|date:'Y-m-d' }}" class="form-control">
@@ -51,191 +27,84 @@
     </form>
   </div>
 
-  <!-- TARJETAS DE RESUMEN -->
+  <!-- Tarjetas de resumen -->
   <div class="row g-4 mb-4">
     <div class="col-md-2">
-      <div class="card shadow-sm border-0 text-center"><div class="card-body">
+      <div class="card card-resumen text-center"><div class="card-body">
         <h6>Socios activos</h6><h3 class="fw-bold">{{ socios_activos }}</h3>
       </div></div>
     </div>
     <div class="col-md-2">
-      <div class="card shadow-sm border-0 text-center"><div class="card-body">
-        <h6>Ingresos totales 2025</h6><h3 class="fw-bold">${{ ingresos_totales|floatformat:0|intcomma }}</h3>
+      <div class="card card-resumen text-center"><div class="card-body">
+        <h6>Ingresos totales 2025</h6><h3 class="fw-bold">${{ ingresos_totales }}</h3>
       </div></div>
     </div>
     <div class="col-md-2">
-      <div class="card shadow-sm border-0 text-center"><div class="card-body">
-        <h6>Reservas totales (Canchas + Talleres)</h6><h3 class="fw-bold">{{ reservas_totales }}</h3>
+      <div class="card card-resumen text-center"><div class="card-body">
+        <h6>Reservas totales</h6><h3 class="fw-bold">{{ reservas_totales }}</h3>
       </div></div>
     </div>
     <div class="col-md-2">
-      <div class="card shadow-sm border-0 text-center"><div class="card-body">
+      <div class="card card-resumen text-center"><div class="card-body">
         <h6>Talleres activos</h6><h3 class="fw-bold">{{ clases_activas }}</h3>
       </div></div>
     </div>
     <div class="col-md-2">
-      <div class="card shadow-sm border-0 text-center"><div class="card-body">
+      <div class="card card-resumen text-center"><div class="card-body">
         <h6>Ocupación actual</h6><h3 class="fw-bold">{{ ocupacion }}%</h3>
       </div></div>
     </div>
   </div>
 
-  <!-- CONTENEDOR DE GRÁFICOS -->
+  <!-- Gráficos -->
   <div class="row">
     <div class="col-md-6 mb-4">
-      <div class="card shadow border-0">
-        <div class="card-body">
-          <h6 class="fw-bold mb-2">👥 Socios por tipo de plan</h6>
-          <canvas id="grafico_socios_plan"></canvas>
-        </div>
-      </div>
+      <div class="card card-grafico"><div class="card-body">
+        <h6 class="fw-bold mb-2">👥 Socios por tipo de plan</h6>
+        <canvas id="grafico_socios_plan"></canvas>
+      </div></div>
     </div>
 
     <div class="col-md-6 mb-4">
-      <div class="card shadow border-0">
-        <div class="card-body">
-          <h6 class="fw-bold mb-2">🥧 Distribución de socios por plan</h6>
-          <canvas id="grafico_donut"></canvas>
-        </div>
-      </div>
+      <div class="card card-grafico"><div class="card-body">
+        <h6 class="fw-bold mb-2">🥧 Distribución de socios por plan</h6>
+        <canvas id="grafico_donut"></canvas>
+      </div></div>
     </div>
 
     <div class="col-md-12 mb-4">
-      <div class="card shadow border-0">
-        <div class="card-body">
-          <h6 class="fw-bold mb-2">📈 Evolución mensual de socios activos</h6>
-          <canvas id="grafico_linea"></canvas>
-        </div>
-      </div>
+      <div class="card card-grafico"><div class="card-body">
+        <h6 class="fw-bold mb-2">📈 Evolución mensual de socios activos</h6>
+        <canvas id="grafico_linea"></canvas>
+      </div></div>
     </div>
 
     <div class="col-md-12 mb-4">
-      <div class="card shadow border-0">
-        <div class="card-body">
-          <h6 class="fw-bold mb-2">📊 Crecimiento por tipo de plan</h6>
-          <canvas id="grafico_area"></canvas>
-        </div>
-      </div>
+      <div class="card card-grafico"><div class="card-body">
+        <h6 class="fw-bold mb-2">📊 Crecimiento por tipo de plan</h6>
+        <canvas id="grafico_area"></canvas>
+      </div></div>
     </div>
   </div>
 </div>
 
-<!-- === Chart.js + Datalabels === -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
+
 <script>
-  const sociosData = {{ socios_por_plan|safe }};
-  const ingresosData = {{ ingresos_por_plan|safe }};
-  const meses = {{ meses|safe }};
-  const totales_mes = {{ totales_mes|safe }};
-  const mesesCrec = {{ meses_crecimiento|safe }};
-  const datasetsCrec = {{ datasets_crecimiento|safe }};
-  const colores = ['#ffc107', '#28a745', '#007bff', '#ff5722', '#7952b3'];
-
-  // --- Barras horizontales ---
-  new Chart(document.getElementById('grafico_socios_plan'), {
-    type: 'bar',
-    data: {
-      labels: sociosData.map(p => p.plan),
-      datasets: [{
-        data: sociosData.map(p => p.cantidad),
-        backgroundColor: colores,
-      }]
-    },
-    options: {
-      indexAxis: 'y',
-      plugins: {
-        legend: { display: false },
-        datalabels: {
-          color: '#111',
-          anchor: 'end',
-          align: 'right',
-          font: { weight: 'bold' },
-          formatter: v => v
-        }
-      }
-    },
-    plugins: [ChartDataLabels]
-  });
-
-  // --- Donut ---
-  new Chart(document.getElementById('grafico_donut'), {
-    type: 'doughnut',
-    data: {
-      labels: sociosData.map(p => p.plan),
-      datasets: [{
-        data: sociosData.map(p => p.cantidad),
-        backgroundColor: colores,
-        borderWidth: 2,
-        borderColor: '#fff'
-      }]
-    },
-    options: {
-      cutout: '70%',
-      plugins: {
-        legend: { position: 'bottom' },
-        datalabels: {
-          color: '#111',
-          font: { weight: 'bold' },
-          formatter: v => v,
-        }
-      }
-    },
-    plugins: [ChartDataLabels]
-  });
-
-  // --- Línea ---
-  new Chart(document.getElementById('grafico_linea'), {
-    type: 'line',
-    data: {
-      labels: meses,
-      datasets: [{
-        label: 'Socios nuevos',
-        data: totales_mes,
-        borderColor: '#007bff',
-        tension: 0.3,
-        fill: true,
-        backgroundColor: 'rgba(0,123,255,0.1)'
-      }]
-    },
-    options: {
-      plugins: {
-        legend: { position: 'bottom' },
-        datalabels: {
-          align: 'top',
-          color: '#111',
-          font: { weight: 'bold' },
-          formatter: v => v
-        }
-      }
-    },
-    plugins: [ChartDataLabels]
-  });
-
-  // --- Área apilada ---
-  new Chart(document.getElementById('grafico_area'), {
-    type: 'line',
-    data: {
-      labels: mesesCrec,
-      datasets: datasetsCrec
-    },
-    options: {
-      responsive: true,
-      interaction: { mode: 'index', intersect: false },
-      stacked: true,
-      plugins: {
-        legend: { position: 'bottom' },
-        datalabels: {
-          align: 'top',
-          color: '#111',
-          font: { weight: 'bold' },
-          formatter: v => v
-        }
-      },
-      scales: { y: { beginAtZero: true } }
-    },
-    plugins: [ChartDataLabels]
-  });
+  window.datosReportes = {
+    sociosPorPlan: {{ socios_por_plan|safe }},
+    ingresosPorPlan: {{ ingresos_por_plan|safe }},
+    meses: {{ meses|safe }},
+    totalesMes: {{ totales_mes|safe }},
+    mesesCrec: {{ meses_crecimiento|safe }},
+    datasetsCrec: {{ datasets_crecimiento|safe }}
+  };
 </script>
+
+
+
+<script src="{% static 'js/reportes/dashboard_reportes.js' %}"></script>
+
 {% endblock %}

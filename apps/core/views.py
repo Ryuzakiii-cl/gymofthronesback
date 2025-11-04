@@ -1,8 +1,9 @@
 from django.shortcuts import render
 from django.db.models import Count, Sum
 from django.utils import timezone  
-from apps.clientes.models import Socio
-from apps.planes.models import Plan, SocioPlan
+from apps.socios.models import Socio
+from apps.planes.models import SocioPlan
+
 
 
 def dashboard_general(request):
@@ -36,3 +37,5 @@ def dashboard_general(request):
     }
 
     return render(request, 'core/dashboard.html', contexto)
+
+
