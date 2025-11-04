@@ -39,7 +39,3 @@ urlpatterns = [
 
 # 👉 Si el usuario ingresa una ruta que no existe lo manda al 404
 handler404 = 'apps.users.views.error_404'
-
-
-
-# linea de prueba para subir archivops
