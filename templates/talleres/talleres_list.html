@@ -16,11 +16,11 @@
           </a>
       {% else %}
           <div class="alert alert-warning mb-3">
-              🚫 Tu plan actual (<strong>{{ socio_plan.plan.nombre }}</strong>) no permite reservar clases.
+              <img src="{% static 'img/prohibido.png' %}" alt="icono prohibido"> Tu plan actual (<strong>{{ socio_plan.plan.nombre }}</strong>) no permite reservar clases.
           </div>
       {% endif %}
 
-      <a href="{% url 'calendario' %}" class="btn btn-outline-primary ms-2">📅 Ver Calendario</a>
+      <a href="{% url 'calendario' %}" class="btn btn-outline-primary ms-2"><img src="{% static 'img/calendario.gif' %}" alt="icono calendario"> Ver Calendario</a>
     </div>
   </div>
 

@@ -1,0 +1,129 @@
+{% extends 'core/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Mi Cuenta | GymOfThrones{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h3 class="fw-bold text-dark mb-3"><i class="ph ph-gear"></i> Mi Cuenta</h3>
+
+  <!-- Tabs de configuración -->
+  <ul class="nav nav-tabs" id="perfilTabs" role="tablist">
+    <li class="nav-item">
+      <button class="nav-link active" id="datos-tab" data-bs-toggle="tab" data-bs-target="#datos" type="button" role="tab">
+        <i class="ph ph-user"></i> Datos personales
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" id="password-tab" data-bs-toggle="tab" data-bs-target="#password" type="button" role="tab">
+        <i class="ph ph-lock"></i> Contraseña
+      </button>
+    </li>
+    {% if request.user.rol in ['socio', 'profesor'] %}
+    <li class="nav-item">
+      <button class="nav-link" id="eliminar-tab" data-bs-toggle="tab" data-bs-target="#eliminar" type="button" role="tab">
+        <i class="ph ph-trash"></i> Eliminar cuenta
+      </button>
+    </li>
+    {% endif %}
+  </ul>
+
+  <div class="tab-content mt-3">
+    <!-- 🧍 DATOS PERSONALES -->
+    <div class="tab-pane fade show active" id="datos" role="tabpanel">
+      <form method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="datos">
+
+        <div class="row">
+          <div class="col-md-6">
+            <label class="form-label">Nombre</label>
+            <input type="text" name="nombre" class="form-control" value="{{ user.nombre }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Apellido</label>
+            <input type="text" name="apellido" class="form-control" value="{{ user.apellido }}">
+          </div>
+        </div>
+
+        <div class="row mt-3">
+          <div class="col-md-6">
+            <label class="form-label">Correo</label>
+            <input type="email" name="correo" class="form-control" value="{{ user.correo }}">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">RUT</label>
+            <input type="text" class="form-control" value="{{ user.rut }}" readonly>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-dark mt-3">Guardar cambios</button>
+      </form>
+    </div>
+
+    <!-- 🔐 CAMBIAR CONTRASEÑA -->
+    <div class="tab-pane fade" id="password" role="tabpanel">
+      <form method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="password">
+
+        <div class="mb-3">
+          <label class="form-label">Contraseña actual</label>
+          <input type="password" name="password_actual" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Nueva contraseña</label>
+          <input type="password" name="password_nueva" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Confirmar nueva contraseña</label>
+          <input type="password" name="password_confirmar" class="form-control" required>
+        </div>
+
+        <button type="submit" class="btn btn-dark">Actualizar contraseña</button>
+      </form>
+    </div>
+
+    <!-- ❌ ELIMINAR CUENTA -->
+    <div class="tab-pane fade" id="eliminar" role="tabpanel">
+      <p class="text-danger mt-2">
+        <i class="ph ph-warning-octagon text-danger fs-3 me-2"></i>
+        Esta acción es irreversible. Se eliminará tu cuenta y tus datos asociados.
+      </p>
+
+      <!-- Botón que activa el modal -->
+      <button type="button" class="btn btn-danger mt-2" data-bs-toggle="modal" data-bs-target="#confirmarEliminacion">
+        Eliminar mi cuenta
+      </button>
+
+      <!-- Modal Bootstrap -->
+      <div class="modal fade" id="confirmarEliminacion" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content border-danger shadow">
+            <div class="modal-header bg-danger text-white">
+              <h5 class="modal-title" id="modalLabel"><i class="ph ph-warning"></i> Confirmar eliminación</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+              <p>¿Estás seguro de que deseas eliminar tu cuenta? <strong>Esta acción no se puede deshacer.</strong></p>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+
+              <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="eliminar">
+                <button type="submit" class="btn btn-danger">Sí, eliminar mi cuenta</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}{% endblock %}

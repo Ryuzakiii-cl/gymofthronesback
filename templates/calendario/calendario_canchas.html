@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="card shadow p-4">
-  <h3 class="mb-4 text-dark fw-bold">🏟️ Reservas de Canchas</h3>
+  <h3 class="mb-4 text-dark fw-bold"><img src="{% static 'img/cancha.png' %}" alt="icono canchas"> Reservas de Canchas</h3>
   <div id="calendar"></div>
 </div>
 
@@ -187,7 +187,6 @@ window.addEventListener('load', function() {
 
     const response = await fetch(`/canchas/api/reservas/eliminar/${id}/`, {
       method: "POST",
-      // *** CORRECCIÓN: Usamos la variable csrfToken que leímos del DOM ***
       headers: { 'X-CSRFToken': csrfToken }
     });
     const data = await response.json();
@@ -195,7 +194,7 @@ window.addEventListener('load', function() {
     if (data.status === 'success') {
       Swal.fire('🗑️ Eliminada', data.message, 'success');
       modal.hide();
-      calendar.refetchEvents(); // <-- Mejora: Se quita el setTimeout
+      calendar.refetchEvents(); 
     } else {
       Swal.fire('❌ Error', data.message || 'No se pudo eliminar la reserva', 'error');
     }

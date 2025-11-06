@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const success = params.get("success");
   const error = params.get("error");
 
-  // ✅ Mensajes de éxito
+  // ✅ MENSAJES DE ÉXITO
   if (success) {
     let config = {
       icon: "success",
@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ⚠️ Mensajes de error
+  // ⚠️ MENSAJES DE ERROR
   if (error) {
     let config = {
       icon: "error",
@@ -74,7 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // 🗑️ Confirmar eliminación de usuario
+  // 🗑️ CONFIRMAR ELIMINACIÓN DE USUARIO
   document.querySelectorAll(".eliminar-usuario").forEach((boton) => {
     boton.addEventListener("click", (e) => {
       e.preventDefault();
@@ -98,4 +98,29 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
   });
+
+  // 🔍 BUSCADOR EN TIEMPO REAL + BOTÓN LIMPIAR
+  const buscador = document.getElementById('buscador');
+  const btnLimpiar = document.getElementById('btnLimpiar');
+  const filas = document.querySelectorAll('#tablaUsuarios tbody tr');
+
+  if (buscador) {
+    const filtrar = () => {
+      const texto = buscador.value.toLowerCase();
+      filas.forEach(fila => {
+        const coincide = fila.innerText.toLowerCase().includes(texto);
+        fila.style.display = coincide ? '' : 'none';
+      });
+    };
+
+    buscador.addEventListener('keyup', filtrar);
+
+    // 🔘 Botón para limpiar búsqueda
+    if (btnLimpiar) {
+      btnLimpiar.addEventListener('click', () => {
+        buscador.value = '';
+        filtrar();
+      });
+    }
+  }
 });

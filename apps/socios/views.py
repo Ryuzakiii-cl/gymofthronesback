@@ -6,15 +6,9 @@ from datetime import timedelta
 from apps.socios.models import Socio
 from apps.planes.models import Plan, SocioPlan
 from apps.pagos.models import Pago
-from django.contrib import messages
-import pandas as pd
+from apps.users.views import es_admin, es_superadmin
 
 
-
-
-# --- Permiso de acceso ---
-def es_admin_o_superadmin(user):
-    return user.is_authenticated and (user.rol == 'admin' or user.rol == 'superadmin')
 
 
 def formatear_rut(rut):
@@ -31,7 +25,7 @@ def formatear_rut(rut):
 
 # --- Listar socios ---
 @login_required
-@user_passes_test(es_admin_o_superadmin)
+@user_passes_test(lambda u: es_admin(u) or es_superadmin(u))
 def lista_socios(request):
     socios = Socio.objects.select_related().order_by('nombre')
     for s in socios:
@@ -42,7 +36,7 @@ def lista_socios(request):
 
 # --- Crear socio ---
 @login_required
-@user_passes_test(es_admin_o_superadmin)
+@user_passes_test(lambda u: es_admin(u) or es_superadmin(u))
 def crear_socio(request):
     planes = Plan.objects.all()
 
@@ -57,7 +51,6 @@ def crear_socio(request):
         plan_id = request.POST.get('plan')
         forma_pago = request.POST.get('forma_pago')
 
-        # ⚠️ Verificar si ya existe el socio
         if Socio.objects.filter(rut=rut).exists():
             return redirect('/socios/?error=exists')
 
@@ -72,6 +65,21 @@ def crear_socio(request):
             fecNac=fecNac,
             estado=True
         )
+
+        # 🔐 Crear usuario asociado al socio
+        from apps.users.models import Usuario
+        from django.contrib.auth.hashers import make_password
+
+        if not Usuario.objects.filter(rut=rut).exists():
+            Usuario.objects.create(
+                rut=rut,
+                nombre=nombre,
+                apellido=apellido_paterno,
+                correo=correo,
+                rol='socio',
+                password=make_password(rut),
+                is_active=True
+            )
 
         # 🧾 Asignar plan y pago
         plan = Plan.objects.get(id=plan_id)
@@ -101,9 +109,10 @@ def crear_socio(request):
     return render(request, 'socios/crear_socio.html', {'planes': planes})
 
 
+
 # --- Editar socio ---
 @login_required
-@user_passes_test(es_admin_o_superadmin)
+@user_passes_test(lambda u: es_admin(u) or es_superadmin(u))
 def editar_socio(request, socio_id):
     socio = get_object_or_404(Socio, id=socio_id)
     planes = Plan.objects.all()
@@ -129,7 +138,7 @@ def editar_socio(request, socio_id):
         # ✅ Guardar el checkbox "estado"
         socio.estado = True if request.POST.get('estado') == 'on' else False
 
-        # ✅ Validar cambio de RUT
+        # ⚠️ Validar cambio de RUT
         if nuevo_rut != socio.rut:
             if Socio.objects.filter(rut=nuevo_rut).exclude(id=socio.id).exists():
                 return redirect(f'/socios/editar/{socio.id}/?error=exists')
@@ -156,6 +165,29 @@ def editar_socio(request, socio_id):
                 )
 
         socio.save()
+
+        # 🔁 Sincronizar usuario asociado al socio
+        from apps.users.models import Usuario
+        from django.contrib.auth.hashers import make_password
+
+        try:
+            usuario = Usuario.objects.get(rut=socio.rut)
+            usuario.nombre = socio.nombre
+            usuario.apellido = socio.apellido_paterno
+            usuario.correo = socio.correo
+            usuario.is_active = socio.estado
+            usuario.save()
+        except Usuario.DoesNotExist:
+            Usuario.objects.create(
+                rut=socio.rut,
+                nombre=socio.nombre,
+                apellido=socio.apellido_paterno,
+                correo=socio.correo,
+                rol='socio',
+                password=make_password(socio.rut),
+                is_active=socio.estado
+            )
+
         return redirect('/socios/?success=updated')
 
     return render(request, 'socios/editar_socio.html', {
@@ -164,12 +196,15 @@ def editar_socio(request, socio_id):
     })
 
 
-
 # --- Eliminar socio ---
 @login_required
-@user_passes_test(es_admin_o_superadmin)
+@user_passes_test(lambda u: es_admin(u) or es_superadmin(u))
 def eliminar_socio(request, id):
     socio = get_object_or_404(Socio, id=id)
+
+    # 🗑️ Eliminar usuario asociado si existe
+    from apps.users.models import Usuario
+    Usuario.objects.filter(rut=socio.rut).delete()
+
     socio.delete()
     return redirect('/socios/?success=deleted')
-

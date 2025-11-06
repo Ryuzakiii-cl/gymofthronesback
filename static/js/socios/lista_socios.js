@@ -3,6 +3,31 @@ document.addEventListener("DOMContentLoaded", () => {
   const success = url.searchParams.get("success");
   const error = url.searchParams.get("error");
 
+  // 🔍 BUSCADOR EN TIEMPO REAL + BOTÓN LIMPIAR
+  const buscador = document.getElementById('buscador');
+  const btnLimpiar = document.getElementById('btnLimpiar');
+  const filas = document.querySelectorAll('#tablaSocios tbody tr');
+
+  if (buscador) {
+    const filtrar = () => {
+      const texto = buscador.value.toLowerCase();
+      filas.forEach(fila => {
+        const coincide = fila.innerText.toLowerCase().includes(texto);
+        fila.style.display = coincide ? '' : 'none';
+      });
+    };
+
+    buscador.addEventListener('keyup', filtrar);
+
+    // 🔘 Botón para limpiar búsqueda
+    if (btnLimpiar) {
+      btnLimpiar.addEventListener('click', () => {
+        buscador.value = '';
+        filtrar();
+      });
+    }
+  }
+
   // ✅ CONFIRMACIÓN DE ELIMINACIÓN
   document.querySelectorAll(".eliminar-socio").forEach(boton => {
     boton.addEventListener("click", e => {
@@ -26,13 +51,13 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }).then(result => {
         if (result.isConfirmed) {
-          window.location.href = href; // Ejecuta la vista eliminar_socio
+          window.location.href = href;
         }
       });
     });
   });
 
-  // 🟢 MENSAJES DE ÉXITO DESPUÉS DEL CRUD
+  // 🟢 MENSAJES DE ÉXITO
   if (success) {
     let mensaje = "";
     let icon = "success";
@@ -64,7 +89,6 @@ document.addEventListener("DOMContentLoaded", () => {
         confirmButton: "fw-bold px-4 py-2",
       },
     }).then(() => {
-      // Limpia los parámetros de la URL
       window.history.replaceState({}, document.title, window.location.pathname);
     });
   }

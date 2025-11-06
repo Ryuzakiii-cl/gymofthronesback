@@ -12,7 +12,7 @@
 
 <body >
     <div class="login-card">
-        <h3 class="text-center mb-4 text-dark">🏋️‍♂️ Gym of Thrones</h3>
+        <h3 class="text-center mb-4 text-dark"> Gym of Thrones</h3>
 
         <form method="POST" novalidate>
             {% csrf_token %}
@@ -24,6 +24,22 @@
                     </div>
                 {% endfor %}
             {% endif %}
+
+            {% if request.GET.error == 'invalid' %}
+            <div class="alert alert-danger text-center">
+                ❌ RUT o contraseña incorrectos. Intenta nuevamente.
+            </div>
+            {% elif request.GET.error == 'sinrol' %}
+            <div class="alert alert-warning text-center">
+                ⚠️ Tu cuenta no tiene un rol asignado. Contacta al administrador.
+            </div>
+            {% elif request.GET.success == 'logout' %}
+            <div class="alert alert-success text-center">
+                Sesión cerrada correctamente.
+            </div>
+            {% endif %}
+
+
 
             <div class="mb-3">
                 <label for="rut" class="form-label">RUT (sin puntos ni guion)</label>

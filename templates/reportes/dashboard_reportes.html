@@ -9,7 +9,7 @@
 
 <div class="container-fluid">
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="fw-bold text-dark">📊 Panel de Reportes y Finanzas</h3>
+    <h3 class="fw-bold text-dark"><img src="{% static 'img/grafico.png' %}" alt="icono planes"> Panel de Reportes y Finanzas</h3>
 
     <form method="get" class="d-flex gap-2 align-items-center">
       <input type="date" name="inicio" value="{{ inicio|date:'Y-m-d' }}" class="form-control">
@@ -22,7 +22,7 @@
       <button type="submit" class="btn btn-dark text-warning fw-bold">Filtrar</button>
       <a href="{% url 'exportar_excel' %}?tipo={{ tipo }}" 
          class="btn btn-success fw-bold d-flex align-items-center gap-2 shadow-sm export-btn">
-        Exportar Excel <i class="ph ph-file-xls" style="font-size: 1.3rem;"></i>
+        Exportar <i class="ph ph-file-xls" style="font-size: 1.3rem;"></i>
       </a>
     </form>
   </div>
