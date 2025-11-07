@@ -19,7 +19,7 @@
         <i class="ph ph-lock"></i> Contraseña
       </button>
     </li>
-    {% if request.user.rol in ['socio', 'profesor'] %}
+    {% if request.user.rol == 'socio' or request.user.rol == 'profesor' %}
     <li class="nav-item">
       <button class="nav-link" id="eliminar-tab" data-bs-toggle="tab" data-bs-target="#eliminar" type="button" role="tab">
         <i class="ph ph-trash"></i> Eliminar cuenta

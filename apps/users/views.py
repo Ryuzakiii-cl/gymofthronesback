@@ -133,7 +133,8 @@ def crear_usuario(request):
             rol=rol,
             password=password
         )
-        return redirect('/usuarios/?success=created')
+        return redirect(f"{reverse('lista_usuarios')}?success=created")
+
 
     return render(request, 'users/form_usuario.html', {'titulo': 'Crear Usuario'})
 
@@ -167,7 +168,8 @@ def editar_usuario(request, user_id):
             usuario.rut = nuevo_rut
 
         usuario.save()
-        return redirect('/usuarios/?success=updated')
+        return redirect(f"{reverse('lista_usuarios')}?success=updated")
+
 
     return render(request, 'users/form_usuario.html', {
         'usuario': usuario,
@@ -181,7 +183,8 @@ def eliminar_usuario(request, user_id):
     """Elimina un usuario del sistema"""
     usuario = get_object_or_404(Usuario, id=user_id)
     usuario.delete()
-    return redirect('/usuarios/?success=deleted')
+    return redirect(f"{reverse('lista_usuarios')}?success=deleted")
+
 
 
 # ===============================

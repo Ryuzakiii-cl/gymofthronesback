@@ -4,34 +4,32 @@
 {% block title %}Lista de Socios{% endblock %}
 
 {% block content %}
-
 <div class="container mt-3">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="fw-bold"><img src="{% static 'img/socios.png' %}" alt="icono socios"> Lista de Socios</h3>
+    <h3 class="fw-bold">
+      <img src="{% static 'img/socios.png' %}" alt="icono socios"> Lista de Socios
+    </h3>
     <a href="{% url 'crear_socio' %}" class="btn btn-dark text-warning fw-bold">+ Nuevo Socio</a>
   </div>
 
   <!-- 🔍 Barra de búsqueda -->
-<div class="input-group mb-3">
-
-  <span class="input-group-text">
-    <img src="{% static 'img/lupa.gif' %}" alt="icono de pergamino">
-  </span>
-
-  <input
-    type="text"
-    id="buscador"
-    class="form-control"
-    placeholder="Buscar por nombre o apellido..."
-  >
-      <button
+  <div class="input-group mb-3">
+    <span class="input-group-text">
+      <img src="{% static 'img/lupa.gif' %}" alt="icono de búsqueda">
+    </span>
+    <input
+      type="text"
+      id="buscador"
+      class="form-control"
+      placeholder="Buscar por nombre o apellido..."
+    >
+    <button
       class="btn btn-outline-secondary"
       type="button"
       id="btnLimpiar"
       title="Limpiar búsqueda"
-    >❌</button> 
-</div>
-
+    >❌</button>
+  </div>
 
   <div class="table-responsive">
     <table class="table table-striped align-middle shadow-sm" id="tablaSocios">
@@ -43,6 +41,7 @@
           <th>Teléfono</th>
           <th>Estado</th>
           <th>Plan</th>
+          <th>Vigencia</th>
           <th>Acciones</th>
         </tr>
       </thead>
@@ -52,7 +51,7 @@
           <td>{{ socio.rut_formateado }}</td>
           <td>{{ socio.nombre }} {{ socio.apellido_paterno }}</td>
           <td>{{ socio.correo }}</td>
-          <td>{{ socio.telefono|default:"-" }}</td>
+          <td>+56{{ socio.telefono }}</td>
           <td>
             {% if socio.estado %}
               <span class="badge bg-success">Activo</span>
@@ -60,15 +59,26 @@
               <span class="badge bg-secondary">Inactivo</span>
             {% endif %}
           </td>
-          <td>{{ socio.plan_actual|safe }}</td>
+          <td>{{ socio.plan_nombre|default:"Sin plan" }}</td>
           <td>
-            <a href="{% url 'editar_socio' socio.id %}" class="btn btn-sm btn-outline-dark">✏️</a>
-            <a href="{% url 'eliminar_socio' socio.id %}" class="btn btn-sm btn-outline-danger eliminar-socio">🗑️</a>
+            {% if socio.plan_vigencia != "-" %}
+              <span class="badge bg-primary">{{ socio.plan_vigencia }}</span>
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td>
+            <a href="{% url 'editar_socio' socio.id %}" class="btn btn-sm btn-outline-dark me-1" title="Editar">
+              <i class="ph ph-pencil-simple"></i>
+            </a>
+            <a href="{% url 'eliminar_socio' socio.id %}" class="btn btn-sm btn-outline-danger eliminar-socio" title="Eliminar">
+              <i class="ph ph-trash"></i>
+            </a>
           </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="7" class="text-center">No hay socios registrados.</td>
+          <td colspan="8" class="text-center">No hay socios registrados.</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -77,8 +87,7 @@
 </div>
 {% endblock %}
 
-
 {% block extra_js %}
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="{% static 'js/socios/lista_socios.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="{% static 'js/socios/lista_socios.js' %}"></script>
 {% endblock %}

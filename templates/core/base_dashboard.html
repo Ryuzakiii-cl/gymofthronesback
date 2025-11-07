@@ -23,6 +23,7 @@
     <ul>
       <!-- 🧠 SUPERADMIN -->
       {% if request.user.rol == 'superadmin' %}
+        <li><a href="{% url 'dashboard_superadmin' %}"><i class="ph ph-house"></i><span>inicio</span></a></li>
         <li><a href="{% url 'lista_usuarios' %}"><i class="ph ph-user"></i><span>Usuarios</span></a></li>
         <li><a href="{% url 'lista_socios' %}"><i class="ph ph-users"></i><span>Socios</span></a></li>
         <li><a href="{% url 'lista_planes' %}"><i class="ph ph-clipboard-text"></i><span>Planes</span></a></li>
@@ -45,6 +46,7 @@
 
       <!-- 🧾 ADMIN -->
       {% elif request.user.rol == 'admin' %}
+        <li><a href="{% url 'dashboard_admin' %}"><i class="ph ph-house"></i><span>inicio</span></a></li>
         <li><a href="{% url 'lista_socios' %}"><i class="ph ph-users"></i><span>Socios</span></a></li>
         <li><a href="{% url 'lista_planes' %}"><i class="ph ph-clipboard-text"></i><span>Planes</span></a></li>
         <li><a href="{% url 'lista_pagos' %}"><i class="ph ph-credit-card"></i><span>Pagos</span></a></li>
@@ -61,17 +63,19 @@
 
       <!-- 🏋🏻 PROFESOR -->
       {% elif request.user.rol == 'profesor' %}
+        <li><a href="{% url 'dashboard_profesor' %}"><i class="ph ph-house"></i><span>inicio</span></a></li>
         <li><a href=""><i class="ph ph-person-simple-walk"></i><span>Mis Talleres</span></a></li>
         <li><a href=""><i class="ph ph-users"></i><span>Mis Alumnos</span></a></li>
-        <li><a href=""><i class="ph ph-dumbbell"></i><span>Rutinas</span></a></li>
+        <li><a href=""><i class="ph ph-barbell"></i><span>Rutinas</span></a></li>
 
       <!-- 🧍‍♂️ SOCIO -->
       {% elif request.user.rol == 'socio' %}
+        <li><a href="{% url 'dashboard_socio' %}"><i class="ph ph-house"></i><span>inicio</span></a></li>
         <li><a href=""><i class="ph ph-user"></i><span>Mi Perfil</span></a></li>
         <li><a href=""><i class="ph ph-credit-card"></i><span>Pagos</span></a></li>
         <li><a href=""><i class="ph ph-calendar"></i><span>Mis Reservas</span></a></li>
         <li><a href=""><i class="ph ph-person-simple-walk"></i><span>Mis Talleres</span></a></li>
-        <li><a href=""><i class="ph ph-dumbbell"></i><span>Mis Rutinas</span></a></li>
+        <li><a href=""><i class="ph ph-barbell"></i><span>Mis Rutinas</span></a></li>
       {% endif %}
     </ul>
   </div>
