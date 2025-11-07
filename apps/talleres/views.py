@@ -32,6 +32,22 @@ def taller_list(request):
     talleres = Taller.objects.all().order_by('fecha', 'hora_inicio')
     return render(request, 'talleres/talleres_list.html', {'talleres': talleres})
 
+
+
+
+@login_required
+@user_passes_test(es_admin_o_superadmin)
+def taller_eliminar(request, taller_id):
+    taller = get_object_or_404(Taller, id_taller=taller_id)
+    taller.delete()
+    messages.success(request, '🗑️ Taller eliminado.')
+    return redirect('talleres_list')
+
+
+# ============================
+#   INSCRIPCIONES Y PROFESOR
+# ============================
+
 @login_required
 @user_passes_test(es_admin_o_superadmin)
 def taller_form(request, taller_id=None):
@@ -88,18 +104,6 @@ def taller_form(request, taller_id=None):
     return render(request, 'talleres/taller_form.html', {'taller': taller, 'profesores': profesores})
 
 
-@login_required
-@user_passes_test(es_admin_o_superadmin)
-def taller_eliminar(request, taller_id):
-    taller = get_object_or_404(Taller, id_taller=taller_id)
-    taller.delete()
-    messages.success(request, '🗑️ Taller eliminado.')
-    return redirect('talleres_list')
-
-
-# ============================
-#   INSCRIPCIONES Y PROFESOR
-# ============================
 
 @login_required
 @user_passes_test(es_admin_o_superadmin)

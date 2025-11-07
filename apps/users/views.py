@@ -142,7 +142,7 @@ def crear_usuario(request):
 @login_required
 @user_passes_test(es_superadmin)
 def lista_usuarios(request):
-    usuarios = Usuario.objects.all().order_by('nombre')
+    usuarios = Usuario.objects.exclude(rol__iexact='socio').order_by('nombre')
     for u in usuarios:
         u.rut_formateado = formatear_rut(u.rut)
     return render(request, 'users/lista_usuarios.html', {'usuarios': usuarios})
