@@ -64,7 +64,7 @@
       <!-- 🏋🏻 PROFESOR -->
       {% elif request.user.rol == 'profesor' %}
         <li><a href="{% url 'dashboard_profesor' %}"><i class="ph ph-house"></i><span>inicio</span></a></li>
-        <li><a href=""><i class="ph ph-person-simple-walk"></i><span>Mis Talleres</span></a></li>
+        <li><a href="{% url 'calendario_talleres' %}"><i class="ph ph-person-simple-walk"></i><span>Mis Talleres</span></a></li>
         <li><a href=""><i class="ph ph-users"></i><span>Mis Alumnos</span></a></li>
         <li><a href=""><i class="ph ph-barbell"></i><span>Rutinas</span></a></li>
 
