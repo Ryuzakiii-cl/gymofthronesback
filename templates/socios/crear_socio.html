@@ -9,10 +9,14 @@
 
 {% block content %}
 <div class="container mt-4">
-  <h3 class="fw-bold mb-4"> <img src="{% static 'img/pergamino.png' %}" alt="icono de pergamino"> Registrar Nuevo Socio</h3>
+  <h3 class="fw-bold mb-4">
+    <img src="{% static 'img/pergamino.png' %}" alt="icono de pergamino"> Registrar Nuevo Socio
+  </h3>
 
   <form method="POST" class="card p-4 shadow-sm">
     {% csrf_token %}
+
+    <!-- Datos personales -->
     <div class="row mb-3">
       <div class="col-md-4">
         <label class="form-label">RUT</label>
@@ -43,25 +47,55 @@
       </div>
     </div>
 
+    <!-- Datos físicos -->
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <label class="form-label">Peso (kg)</label>
+        <input type="number" step="0.01" name="peso" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Altura (m)</label>
+        <input type="number" step="0.01" name="altura" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Objetivo</label>
+        <select name="objetivo" class="form-select">
+          {% for valor, texto in socio.objetivos_choices %}
+            <option value="{{ valor }}">{{ texto }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <!-- Fecha y profesor -->
     <div class="row mb-3">
       <div class="col-md-6">
         <label class="form-label">Fecha de nacimiento</label>
         <input type="date" name="fecNac" class="form-control">
       </div>
       <div class="col-md-6">
-        <label class="form-label">Plan</label>
-        <select name="plan" id="plan" class="form-select" required>
-          <option value="">-- Seleccionar --</option>
-          {% for plan in planes %}
-            <option value="{{ plan.id }}" data-precio="{{ plan.precio }}" data-duracion="{{ plan.duracion }}" data-beneficios="{{ plan.descripcion }}">
-              {{ plan.nombre }} (${{ plan.precio }})
-            </option>
+        <label class="form-label">Profesor Asignado</label>
+        <select name="profesor" class="form-select">
+          <option value="">-- Sin asignar --</option>
+          {% for profesor in profesores %}
+            <option value="{{ profesor.id }}">{{ profesor.nombre }} {{ profesor.apellido }} - {{ profesor.get_especialidad_display }}</option>
           {% endfor %}
         </select>
       </div>
     </div>
 
+    <!-- Plan y forma de pago -->
     <div class="row mb-3">
+      <div class="col-md-6">
+        <label class="form-label">Plan</label>
+        <select name="plan" id="plan" class="form-select" required>
+          <option value="">-- Seleccionar --</option>
+          {% for plan in planes %}
+            <option value="{{ plan.id }}">{{ plan.nombre }} (${{ plan.precio }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
       <div class="col-md-6">
         <label class="form-label">Forma de pago</label>
         <select name="forma_pago" class="form-select">

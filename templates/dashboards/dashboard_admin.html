@@ -1,8 +1,89 @@
 {% extends 'core/base_dashboard.html' %}
+{% load static %}
+
 {% block title %}Panel Administrativo{% endblock %}
 
 {% block content %}
-  <h1 class="mb-3">Panel Administrativo</h1>
-  <p>Bienvenido {{ request.user.nombre }} {{ request.user.apellido }}👋</p>
-  <p>Aquí podrás gestionar socios, planes, pagos y reservas.</p>
+<div class="container mt-4">
+
+  <h3 class="fw-bold mb-4">
+    <img src="{% static 'img/admin.png' %}" alt="icono admin" class="me-2">
+    Panel General del Sistema
+  </h3>
+
+  <!-- Resumen general -->
+  <div class="row text-center mb-4">
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm border-0 bg-light p-3">
+        <h4 class="fw-bold text-primary">{{ total_admins }}</h4>
+        <p>Administradores</p>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm border-0 bg-light p-3">
+        <h4 class="fw-bold text-success">{{ total_profesores }}</h4>
+        <p>Profesores</p>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm border-0 bg-light p-3">
+        <h4 class="fw-bold text-warning">{{ total_socios }}</h4>
+        <p>Socios Registrados</p>
+      </div>
+    </div>
+    <div class="col-md-3 mb-3">
+      <div class="card shadow-sm border-0 bg-light p-3">
+        <h4 class="fw-bold text-info">{{ rutinas_totales }}</h4>
+        <p>Rutinas Totales</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estado de socios -->
+  <div class="card shadow-sm p-4 mb-4">
+    <h5 class="fw-bold mb-3">📊 Estado de Socios</h5>
+    <p>Activos: <span class="fw-bold text-success">{{ socios_activos }}</span></p>
+    <p>Inactivos: <span class="fw-bold text-danger">{{ socios_inactivos }}</span></p>
+  </div>
+
+  <!-- Planes y Rutinas -->
+  <div class="card shadow-sm p-4 mb-4">
+    <h5 class="fw-bold mb-3">🧾 Planes y Rutinas</h5>
+    <p>Planes Vigentes: <span class="fw-bold text-success">{{ planes_vigentes }}</span></p>
+    <p>Planes Vencidos: <span class="fw-bold text-secondary">{{ planes_vencidos }}</span></p>
+    <p>Rutinas Activas: <span class="fw-bold text-info">{{ rutinas_activas }}</span></p>
+  </div>
+
+  <!-- Últimos movimientos -->
+  <div class="row">
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm p-4">
+        <h5 class="fw-bold mb-3">🧍‍♂️ Últimos Socios Registrados</h5>
+        <ul class="list-group list-group-flush">
+          {% for socio in ultimos_socios %}
+          <li class="list-group-item">{{ socio.nombre }} {{ socio.apellido_paterno }} - {{ socio.correo }}</li>
+          {% empty %}
+          <li class="list-group-item text-muted">No hay socios registrados recientemente.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm p-4">
+        <h5 class="fw-bold mb-3">🏋️ Últimas Rutinas Asignadas</h5>
+        <ul class="list-group list-group-flush">
+          {% for rutina in ultimas_rutinas %}
+          <li class="list-group-item">
+            {{ rutina.titulo }} — {{ rutina.socio.nombre }} ({{ rutina.profesor.nombre }})
+          </li>
+          {% empty %}
+          <li class="list-group-item text-muted">No hay rutinas recientes.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+</div>
 {% endblock %}

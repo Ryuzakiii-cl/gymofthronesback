@@ -24,8 +24,7 @@ urlpatterns = [
     path('api/<int:taller_id>/', views.api_detalle_taller, name='api_detalle_taller'),
     path('api/<int:taller_id>/editar/', views.api_editar_taller, name='api_editar_taller'),
     path('api/<int:taller_id>/eliminar/', views.api_eliminar_taller, name='api_eliminar_taller'),
-    path('api/<int:taller_id>/inscribir/', views.api_inscribir_socio, name='api_inscribir_taller'),
-
+    
     # ============================================================
     # ⚙️ API AJAX - INSCRIPCIONES A TALLERES
     # ============================================================

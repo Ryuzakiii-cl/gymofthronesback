@@ -1,5 +1,7 @@
 {% extends 'core/base_dashboard.html' %}
+{% load static %}
 {% block title %}{{ titulo }}{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
   <h3 class="fw-bold mb-4 text-center">{{ titulo }}</h3>
@@ -40,7 +42,7 @@
       <!-- 🧩 Rol -->
       <div class="col-md-3">
         <label class="form-label">Rol</label>
-        <select name="rol" class="form-select" required>
+        <select name="rol" id="rol" class="form-select" required>
           {% if usuario %}
             {% for key, value in usuario.ROLES %}
               <option value="{{ key }}" {% if usuario.rol == key %}selected{% endif %}>{{ value }}</option>
@@ -52,6 +54,19 @@
           {% endif %}
         </select>
       </div>
+
+      <!-- 🧠 Especialidad (solo para profesores) -->
+    <div class="col-md-3" id="especialidad-block"
+        style="{% if usuario and usuario.rol == 'profesor' %}display:block{% else %}display:none{% endif %};">
+      <label class="form-label">Especialidad</label>
+      <select name="especialidad" id="especialidad" class="form-select">
+        <option value="">-- Seleccionar --</option>
+        {% for val, texto in especialidades %}
+          <option value="{{ val }}" {% if usuario and usuario.especialidad == val %}selected{% endif %}>{{ texto }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
 
       <!-- 🔐 Contraseña solo si es nuevo -->
       {% if not usuario %}
@@ -79,4 +94,8 @@
     </div>
   </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/users/lista_usuarios.js' %}"></script>
 {% endblock %}

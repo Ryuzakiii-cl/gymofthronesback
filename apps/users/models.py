@@ -3,7 +3,9 @@ from django.db import models
 from django.utils import timezone
 
 
-
+# ======================
+#  MANAGER PERSONALIZADO
+# ======================
 class UsuarioManager(BaseUserManager):
     def create_user(self, rut, password=None, **extra_fields):
         if not rut:
@@ -20,6 +22,10 @@ class UsuarioManager(BaseUserManager):
         extra_fields.setdefault('rol', 'superadmin')
         return self.create_user(rut, password, **extra_fields)
 
+
+# ======================
+#  MODELO DE USUARIO
+# ======================
 class Usuario(AbstractBaseUser, PermissionsMixin):
     ROLES = [
         ('superadmin', 'Super Administrador'),
@@ -28,11 +34,32 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
         ('socio', 'Socio'),
     ]
 
-    rut = models.CharField(max_length=12, unique=True,)
+    # 🔹 Especialidades solo para profesores
+    ESPECIALIDAD_CHOICES = [
+        ('zumba', 'Zumba'),
+        ('spinning', 'Spinning'),
+        ('pilates', 'Pilates'),
+        ('yoga', 'Yoga'),
+        ('pesas', 'Pesas / Musculación'),
+        ('cardio', 'Cardio / Resistencia'),
+        ('funcional', 'Entrenamiento Funcional'),
+        ('no_aplica', 'No aplica'),
+    ]
+
+    rut = models.CharField(max_length=12, unique=True)
     nombre = models.CharField(max_length=50)
     apellido = models.CharField(max_length=50)
     correo = models.EmailField(unique=True)
     rol = models.CharField(max_length=15, choices=ROLES, default='socio')
+
+    especialidad = models.CharField(
+        max_length=30,
+        choices=ESPECIALIDAD_CHOICES,
+        default='no_aplica',
+        blank=True,
+        null=True,
+        help_text="Área de especialización del profesor"
+    )
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -42,6 +69,15 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = 'rut'
     REQUIRED_FIELDS = ['nombre', 'apellido', 'correo']
+
+
+    def save(self, *args, **kwargs):
+        if self.rol != 'profesor':
+            self.especialidad = 'no_aplica'  # 💡 fuerza el valor en cada guardado
+        elif not self.especialidad or self.especialidad == 'no_aplica':
+            self.especialidad = None  # deja vacío si aún no eligió
+        super().save(*args, **kwargs)
+
 
     def __str__(self):
         return f"{self.nombre} {self.apellido} ({self.get_rol_display()})"

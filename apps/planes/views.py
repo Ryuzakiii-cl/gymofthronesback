@@ -18,18 +18,9 @@ def formatear_numero(valor):
         return "0"
 
 
-@login_required
-@user_passes_test(es_admin_o_superadmin)
-def lista_planes(request):
-    planes = Plan.objects.all().order_by('precio')
-
-    # Aplica formato chileno al precio
-    for p in planes:
-        p.precio_formateado = formatear_numero(p.precio)
-
-    return render(request, 'planes/lista_planes.html', {'planes': planes})
-
-
+# ===============================
+# CRUD DE USUARIOS
+# ===============================
 
 @login_required
 @user_passes_test(es_admin_o_superadmin)
@@ -56,6 +47,14 @@ def crear_plan(request):
 
 @login_required
 @user_passes_test(es_admin_o_superadmin)
+def lista_planes(request):
+    planes = Plan.objects.all().order_by('precio')
+    for p in planes:
+        p.precio_formateado = formatear_numero(p.precio)
+    return render(request, 'planes/lista_planes.html', {'planes': planes})
+
+@login_required
+@user_passes_test(es_admin_o_superadmin)
 def editar_plan(request, plan_id):
     plan = get_object_or_404(Plan, id=plan_id)
     if request.method == 'POST':
@@ -77,6 +76,10 @@ def eliminar_plan(request, plan_id):
     plan.delete()
     return redirect('lista_planes')
 
+
+# ===============================
+# ASIGNACION DE PLAN A SOCIO
+# ===============================
 
 @login_required
 @user_passes_test(es_admin_o_superadmin)

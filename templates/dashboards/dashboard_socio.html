@@ -1,8 +1,67 @@
 {% extends 'core/base_dashboard.html' %}
-{% block title %}Panel Socio{% endblock %}
+{% load static %}
+
+{% block title %}Panel del Socio{% endblock %}
 
 {% block content %}
-  <h1 class="mb-3">Panel Socio</h1>
-  <p>Bienvenido {{ request.user.nombre }} {{ request.user.apellido }}👋</p>
-  <p>Aquí podrás gestionar tus clases y reservas.</p>
+<div class="container mt-4">
+
+
+  <!-- Información Personal -->
+  <div class="card shadow-sm p-4 mb-4">
+    <h5 class="fw-bold mb-3">📋 Información Personal</h5>
+    <p><strong>Correo:</strong> {{ request.user.correo }}</p>
+    <p><strong>Plan Activo:</strong> {{ socio.plan_nombre }}</p>
+    <p><strong>Vigencia del Plan:</strong> {{ socio.plan_vigencia }}</p>
+    <p><strong>Profesor Asignado:</strong>
+      {% if socio.profesor_asignado %}
+        {{ socio.profesor_asignado.nombre }} {{ socio.profesor_asignado.apellido }}
+        {% if socio.profesor_asignado.especialidad %}
+          ({{ socio.profesor_asignado.get_especialidad_display }})
+        {% endif %}
+      {% else %}
+        <span class="text-muted">No asignado</span>
+      {% endif %}
+    </p>
+  </div>
+
+  <!-- Estado Físico -->
+  <div class="card shadow-sm p-4">
+    <h5 class="fw-bold mb-3">💪 Estado Físico</h5>
+    <p><strong>Peso:</strong> 
+      {% if socio.peso %}
+        {{ socio.peso }} kg
+      {% else %}
+        <span class="text-muted">Sin registrar</span>
+      {% endif %}
+    </p>
+
+    <p><strong>Altura:</strong>
+      {% if socio.altura %}
+        {{ socio.altura }} m
+      {% else %}
+        <span class="text-muted">Sin registrar</span>
+      {% endif %}
+    </p>
+
+    <p><strong>Objetivo:</strong> {{ socio.get_objetivo_display|default:"No definido" }}</p>
+
+    {% if socio.imc %}
+      <div class="alert alert-info mt-3">
+        <strong>IMC actual:</strong> {{ socio.imc }}
+        {% if socio.imc < 18.5 %}
+          (Bajo peso)
+        {% elif socio.imc < 25 %}
+          (Normal)
+        {% elif socio.imc < 30 %}
+          (Sobrepeso)
+        {% else %}
+          (Obesidad)
+        {% endif %}
+      </div>
+    {% else %}
+      <p class="text-muted mt-3">No hay datos suficientes para calcular el IMC.</p>
+    {% endif %}
+  </div>
+</div>
 {% endblock %}

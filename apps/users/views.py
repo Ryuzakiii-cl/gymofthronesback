@@ -1,62 +1,166 @@
 # apps/users/views.py
-from django.shortcuts import render, redirect, get_object_or_404
+from apps.core.utils import formatear_rut
+from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.hashers import make_password, check_password
+from django.core.files.storage import FileSystemStorage
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from .models import Usuario
-from django.contrib import messages
+from apps.core.decorators import es_superadmin, es_admin, es_profesor, es_socio
 import pandas as pd
 import os
-from django.core.files.storage import FileSystemStorage
-from django.conf import settings
-from django.contrib.auth.hashers import make_password, check_password
+
+from apps.socios.models import Socio
+from apps.rutinas.models import Rutina
+from apps.talleres.models import Taller
 
 # ===============================
-# 🧰 CONTROL DE ROLES
+# DASHBOARDS POR ROL
 # ===============================
-def es_superadmin(user):
-    """Solo usuarios con rol superadmin pueden acceder"""
-    return user.is_authenticated and user.rol == 'superadmin'
-
-def es_admin(user):
-    """Solo usuarios con rol admin pueden acceder"""
-    return user.is_authenticated and user.rol == 'admin'
-
-def es_profesor(user):
-    """Solo usuarios con rol profesor pueden acceder"""
-    return user.is_authenticated and user.rol == 'profesor'
-
-def es_socio(user):
-    """Solo usuarios con rol socio pueden acceder"""
-    return user.is_authenticated and user.rol == 'socio'
-
-# ===============================
-# 🧭 DASHBOARDS POR ROL
-# ===============================
-
 
 @login_required
 @user_passes_test(es_superadmin)
 def dashboard_superadmin(request):
-    return render(request, 'dashboards/dashboard_superadmin.html')
+    """Panel principal del Superadmin: vista general del sistema."""
+    from apps.socios.models import Socio
+    from apps.users.models import Usuario
+    from apps.rutinas.models import Rutina
+    from apps.planes.models import Plan, SocioPlan
+
+    # 👥 Totales por rol
+    total_admins = Usuario.objects.filter(rol='admin').count()
+    total_profesores = Usuario.objects.filter(rol='profesor').count()
+    total_socios = Usuario.objects.filter(rol='socio').count()
+
+    # 💪 Socios activos/inactivos
+    socios_activos = Socio.objects.filter(estado=True).count()
+    socios_inactivos = Socio.objects.filter(estado=False).count()
+
+    # 🧾 Rutinas y planes
+    rutinas_activas = Rutina.objects.filter(estado='activa').count()
+    rutinas_totales = Rutina.objects.count()
+
+    planes_vigentes = SocioPlan.objects.filter(estado=True).count()
+    planes_vencidos = SocioPlan.objects.filter(estado=False).count()
+
+    # 🕒 Últimos registros
+    ultimos_socios = Socio.objects.order_by('-fec_registro')[:5]
+    ultimas_rutinas = Rutina.objects.order_by('-fecha_asignacion')[:5]
+
+    context = {
+        'total_admins': total_admins,
+        'total_profesores': total_profesores,
+        'total_socios': total_socios,
+        'socios_activos': socios_activos,
+        'socios_inactivos': socios_inactivos,
+        'rutinas_activas': rutinas_activas,
+        'rutinas_totales': rutinas_totales,
+        'planes_vigentes': planes_vigentes,
+        'planes_vencidos': planes_vencidos,
+        'ultimos_socios': ultimos_socios,
+        'ultimas_rutinas': ultimas_rutinas,
+    }
+
+    return render(request, 'dashboards/dashboard_superadmin.html', context)
+
 
 @login_required
 @user_passes_test(es_admin)
 def dashboard_admin(request):
-    return render(request, 'dashboards/dashboard_admin.html')
+    """Panel principal del Admin: vista general del sistema."""
+    from apps.socios.models import Socio
+    from apps.users.models import Usuario
+    from apps.rutinas.models import Rutina
+    from apps.planes.models import Plan, SocioPlan
+
+    # 👥 Totales por rol
+    total_admins = Usuario.objects.filter(rol='admin').count()
+    total_profesores = Usuario.objects.filter(rol='profesor').count()
+    total_socios = Usuario.objects.filter(rol='socio').count()
+
+    # 💪 Socios activos/inactivos
+    socios_activos = Socio.objects.filter(estado=True).count()
+    socios_inactivos = Socio.objects.filter(estado=False).count()
+
+    # 🧾 Rutinas y planes
+    rutinas_activas = Rutina.objects.filter(estado='activa').count()
+    rutinas_totales = Rutina.objects.count()
+
+    planes_vigentes = SocioPlan.objects.filter(estado=True).count()
+    planes_vencidos = SocioPlan.objects.filter(estado=False).count()
+
+    # 🕒 Últimos registros
+    ultimos_socios = Socio.objects.order_by('-fec_registro')[:5]
+    ultimas_rutinas = Rutina.objects.order_by('-fecha_asignacion')[:5]
+
+    context = {
+        'total_admins': total_admins,
+        'total_profesores': total_profesores,
+        'total_socios': total_socios,
+        'socios_activos': socios_activos,
+        'socios_inactivos': socios_inactivos,
+        'rutinas_activas': rutinas_activas,
+        'rutinas_totales': rutinas_totales,
+        'planes_vigentes': planes_vigentes,
+        'planes_vencidos': planes_vencidos,
+        'ultimos_socios': ultimos_socios,
+        'ultimas_rutinas': ultimas_rutinas,
+    }
+
+    return render(request, 'dashboards/dashboard_admin.html', context)
+
+
+
 
 @login_required
 @user_passes_test(es_profesor)
 def dashboard_profesor(request):
-    return render(request, 'dashboards/dashboard_profesor.html')
+    """Panel principal del profesor con métricas."""
+    profesor = request.user
+
+    # 🔹 Contar alumnos asignados
+    total_alumnos = Socio.objects.filter(profesor_asignado=profesor).count()
+
+    # 🔹 Contar rutinas activas
+    rutinas_activas = Rutina.objects.filter(profesor=profesor, estado='activa').count()
+
+    # 🔹 Contar talleres si existe el modelo
+    try:
+        talleres_asignados = Taller.objects.filter(profesor=profesor).count()
+    except Exception:
+        talleres_asignados = 0
+
+    context = {
+        'total_alumnos': total_alumnos,
+        'rutinas_activas': rutinas_activas,
+        'talleres_asignados': talleres_asignados,
+    }
+
+    return render(request, 'dashboards/dashboard_profesor.html', context)
+
 
 @login_required
 @user_passes_test(es_socio)
 def dashboard_socio(request):
-    return render(request, 'dashboards/dashboard_socio.html')
-                        
+    """Panel principal del socio: muestra su información, plan, profesor y estado físico."""
+    socio = Socio.objects.filter(rut=request.user.rut).select_related('profesor_asignado').first()
+
+    if not socio:
+        messages.warning(request, "No se encontró información de socio asociada a tu cuenta.")
+        return render(request, 'dashboards/dashboard_socio.html', {'socio': None})
+
+    context = {
+        'socio': socio,
+    }
+    return render(request, 'dashboards/dashboard_socio.html', context)
+
+
+
 # ===============================
-# 🧩 AUTENTICACIÓN
+# AUTENTICACIÓN
 # ===============================
 def login_view(request):
     """Pantalla de inicio de sesión"""
@@ -90,22 +194,8 @@ def logout_view(request):
     return redirect('/users/login/?success=logout')
 
 
-
-def formatear_rut(rut):
-    """Formatea un RUT chileno sin puntos ni guion -> con puntos y guion."""
-    try:
-        rut = str(rut)
-        cuerpo, dv = rut[:-1], rut[-1]
-        cuerpo_con_puntos = f"{int(cuerpo):,}".replace(",", ".")
-        return f"{cuerpo_con_puntos}-{dv.upper()}"
-    except Exception:
-        return rut 
-
-
-
-
 # ===============================
-# 👥 CRUD DE USUARIOS
+# CRUD DE USUARIOS
 # ===============================
 
 @login_required
@@ -118,14 +208,15 @@ def crear_usuario(request):
         apellido = request.POST['apellido']
         correo = request.POST['correo']
         rol = request.POST['rol']
+        especialidad = request.POST.get('especialidad')
         password = rut
 
         # ⚠️ Verificar duplicados
         if Usuario.objects.filter(rut=rut).exists():
             return redirect('/usuarios/?error=exists')
 
-        # ✅ Crear usuario
-        Usuario.objects.create_user(
+        # ✅ Crear usuario base
+        user = Usuario.objects.create_user(
             rut=rut,
             nombre=nombre,
             apellido=apellido,
@@ -133,10 +224,20 @@ def crear_usuario(request):
             rol=rol,
             password=password
         )
+
+        # 🔹 Solo guardar especialidad si es profesor, si no => 'no_aplica'
+        if rol == 'Profesor':
+            user.especialidad = especialidad or None
+        else:
+            user.especialidad = 'no_aplica'
+        user.save()
         return redirect(f"{reverse('lista_usuarios')}?success=created")
 
-
-    return render(request, 'users/form_usuario.html', {'titulo': 'Crear Usuario'})
+    especialidades = Usuario.ESPECIALIDAD_CHOICES
+    return render(request, 'users/form_usuario.html', {
+        'titulo': 'Crear Usuario',
+        'especialidades': especialidades
+    })
 
 
 @login_required
@@ -146,6 +247,7 @@ def lista_usuarios(request):
     for u in usuarios:
         u.rut_formateado = formatear_rut(u.rut)
     return render(request, 'users/lista_usuarios.html', {'usuarios': usuarios})
+
 
 @login_required
 @user_passes_test(es_superadmin)
@@ -160,8 +262,13 @@ def editar_usuario(request, user_id):
         usuario.correo = request.POST['correo']
         usuario.rol = request.POST['rol']
         usuario.is_active = 'is_active' in request.POST
+        especialidad = request.POST.get('especialidad') 
 
-        # ⚠️ Validar duplicado de RUT si cambió
+        if usuario.rol == 'profesor':
+            usuario.especialidad = especialidad or None
+        else:
+            usuario.especialidad = 'no_aplica'
+
         if nuevo_rut != usuario.rut:
             if Usuario.objects.filter(rut=nuevo_rut).exclude(id=usuario.id).exists():
                 return redirect('/usuarios/?error=exists')
@@ -170,10 +277,11 @@ def editar_usuario(request, user_id):
         usuario.save()
         return redirect(f"{reverse('lista_usuarios')}?success=updated")
 
-
+    especialidades = Usuario.ESPECIALIDAD_CHOICES
     return render(request, 'users/form_usuario.html', {
         'usuario': usuario,
-        'titulo': 'Editar Usuario'
+        'titulo': 'Editar Usuario',
+        'especialidades': especialidades
     })
 
 
@@ -184,7 +292,6 @@ def eliminar_usuario(request, user_id):
     usuario = get_object_or_404(Usuario, id=user_id)
     usuario.delete()
     return redirect(f"{reverse('lista_usuarios')}?success=deleted")
-
 
 
 # ===============================
@@ -198,8 +305,6 @@ def error_404(request, exception=None):
 # ===============================
 # CARGA MASIVA DE DATOS
 # ===============================
-
-
 @login_required
 @user_passes_test(es_superadmin)
 def carga_usuarios(request):
@@ -229,13 +334,19 @@ def carga_usuarios(request):
                 if Usuario.objects.filter(rut=rut).exists():
                     continue
 
+                rol = row['rol']
+                especialidad = (
+                    row['especialidad'] if 'especialidad' in df.columns and rol == 'profesor'
+                    else 'no_aplica'
+                )
+
                 Usuario.objects.create(
                     rut=rut,
                     nombre=row['nombre'],
                     apellido=row['apellido'],
-                    
                     correo=row['correo'],
-                    rol=row['rol'],
+                    rol=rol,
+                    especialidad=especialidad,
                     password=make_password(str(row['rut'])),
                     is_active=True,
                 )
@@ -251,9 +362,9 @@ def carga_usuarios(request):
     return redirect('lista_usuarios')
 
 
-# --- PERFIL DE USUARIO / CONFIGURACIÓN ---
-
-
+# ===============================
+# CONFIGURACIÓN DE CUENTA
+# ===============================
 @login_required
 def perfil_usuario(request):
     """Vista principal del panel de cuenta (perfil del usuario)"""
@@ -278,14 +389,12 @@ def perfil_usuario(request):
                 update_session_auth_hash(request, user)
                 messages.success(request, "Contraseña actualizada correctamente.")
 
-
         elif action == 'datos':
-                user.nombre = request.POST.get('nombre')
-                user.apellido = request.POST.get('apellido')
-                user.correo = request.POST.get('correo')
-                user.save()
-                messages.success(request, "Datos personales actualizados correctamente.")
-          
+            user.nombre = request.POST.get('nombre')
+            user.apellido = request.POST.get('apellido')
+            user.correo = request.POST.get('correo')
+            user.save()
+            messages.success(request, "Datos personales actualizados correctamente.")
 
         # ❌ Eliminar cuenta (solo socio y profesor)
         elif action == 'eliminar':

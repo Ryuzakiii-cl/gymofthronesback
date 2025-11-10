@@ -1,0 +1,47 @@
+{% extends 'core/base_dashboard.html' %}
+{% load static %}
+{% block title %}Mis Pagos{% endblock %}
+
+{% block content %}
+<div class="container mt-3">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="fw-bold">
+      <img src="{% static 'img/tarjeta48.png' %}" alt="icono de pagos">
+      Historial de Pagos
+    </h3>
+  </div>
+
+  <table class="table table-striped table-bordered align-middle">
+    <thead class="table-dark">
+      <tr>
+        <th>Plan</th>
+        <th>Monto</th>
+        <th>Forma de pago</th>
+        <th>Fecha</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in pagos %}
+        <tr>
+          <td>{{ p.plan.nombre }}</td>
+          <td>${{ p.monto_formateado }}</td>
+          <td>{{ p.forma_pago|title }}</td>
+          <td>{{ p.fecha_pago|date:"j \\d\\e F \\d\\e Y" }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4" class="text-center">No tienes pagos registrados.</td></tr>
+      {% endfor %}
+    </tbody>
+
+    {% if pagos %}
+    <tfoot>
+      <tr class="table-light fw-bold">
+        <td colspan="4" class="text-end pe-4">
+          Total pagado: ${{ total_pagado}}
+        </td>
+      </tr>
+    </tfoot>
+    {% endif %}
+  </table>
+</div>
+{% endblock %}

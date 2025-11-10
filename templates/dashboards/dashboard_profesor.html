@@ -1,8 +1,53 @@
 {% extends 'core/base_dashboard.html' %}
-{% block title %}Panel Profesor{% endblock %}
+{% load static %}
+
+{% block title %}Panel del Profesor{% endblock %}
 
 {% block content %}
-  <h1 class="mb-3">Panel Profesor</h1>
-  <p>Bienvenido {{ request.user.nombre }} {{ request.user.apellido }}👋</p>
-  <p>Aquí podrás gestionar los horarios de clases y los alumnos.</p>
+<div class="container mt-4">
+
+
+  <!-- Información personal -->
+  <div class="card shadow-sm p-4 mb-4">
+    <h5 class="fw-bold mb-3">📋 Información Personal</h5>
+    <p><strong>Correo:</strong> {{ request.user.correo }}</p>
+    <p><strong>Rol:</strong> Profesor</p>
+    <p><strong>Especialidad:</strong> 
+      {% if request.user.especialidad %}
+        {{ request.user.get_especialidad_display }}
+      {% else %}
+        <span class="text-muted">No definida</span>
+      {% endif %}
+    </p>
+    <p><strong>Fecha de ingreso al sistema:</strong> {{ request.user.fecha_creacion|date:"d/m/Y" }}</p>
+  </div>
+
+  <!-- Estadísticas generales -->
+  <div class="card shadow-sm p-4 mb-4">
+    <h5 class="fw-bold mb-3">📊 Resumen General</h5>
+    <div class="row text-center">
+      <div class="col-md-4 mb-3">
+        <div class="border rounded p-3 bg-light">
+          <h2 class="fw-bold text-primary">{{ total_alumnos }}</h2>
+          <p class="mb-0">Alumnos Asignados</p>
+        </div>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <div class="border rounded p-3 bg-light">
+          <h2 class="fw-bold text-success">{{ rutinas_activas }}</h2>
+          <p class="mb-0">Rutinas Activas</p>
+        </div>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <div class="border rounded p-3 bg-light">
+          <h2 class="fw-bold text-warning">{{ talleres_asignados }}</h2>
+          <p class="mb-0">Talleres Asignados</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
 {% endblock %}

@@ -42,6 +42,7 @@
           <th>Estado</th>
           <th>Plan</th>
           <th>Vigencia</th>
+          <th>Profesor Asignado</th>
           <th>Acciones</th>
         </tr>
       </thead>
@@ -49,9 +50,15 @@
         {% for socio in socios %}
         <tr>
           <td>{{ socio.rut_formateado }}</td>
-          <td>{{ socio.nombre }} {{ socio.apellido_paterno }}</td>
+          <td>{{ socio.nombre }} {{ socio.apellido_paterno }} {{ socio.apellido_materno }}</td>
           <td>{{ socio.correo }}</td>
-          <td>+56{{ socio.telefono }}</td>
+          <td>
+            {% if socio.telefono %}
+              +56{{ socio.telefono }}
+            {% else %}
+              -
+            {% endif %}
+          </td>
           <td>
             {% if socio.estado %}
               <span class="badge bg-success">Activo</span>
@@ -68,17 +75,28 @@
             {% endif %}
           </td>
           <td>
-            <a href="{% url 'editar_socio' socio.id %}" class="btn btn-sm btn-outline-dark me-1" title="Editar">
-              <i class="ph ph-pencil-simple"></i>
+            {% if socio.profesor_asignado %}
+              {{ socio.profesor_asignado.nombre }} {{ socio.profesor_asignado.apellido }}
+              <br>
+              <small class="text-muted">
+                {{ socio.profesor_asignado.get_especialidad_display }}
+              </small>
+            {% else %}
+              <span class="text-muted fst-italic">No asignado</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{% url 'editar_socio' socio.id %}" class="btn btn-sm btn-outline-dark" title="Editar">
+              ✏️
             </a>
             <a href="{% url 'eliminar_socio' socio.id %}" class="btn btn-sm btn-outline-danger eliminar-socio" title="Eliminar">
-              <i class="ph ph-trash"></i>
+              🗑️
             </a>
           </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="8" class="text-center">No hay socios registrados.</td>
+          <td colspan="9" class="text-center">No hay socios registrados.</td>
         </tr>
         {% endfor %}
       </tbody>

@@ -1,0 +1,53 @@
+{% extends 'core/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Plantillas de Rutinas{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold mb-0">
+      <img src="{% static 'img/planes.png' %}" alt="icono de pesas"> Plantillas de Rutinas
+    </h3>
+    <a href="{% url 'crear_rutina' %}" class="btn btn-dark text-warning fw-bold">
+      + Nueva Plantilla
+    </a>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-striped align-middle shadow-sm">
+      <thead class="table-dark">
+        <tr>
+          <th>Título</th>
+          <th>Objetivo</th>
+          <th>IMC mínimo</th>
+          <th>IMC máximo</th>
+          <th>Descripción</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rutina in rutinas %}
+        <tr>
+          <td>{{ rutina.titulo }}</td>
+          <td>{{ rutina.get_objetivo_display }}</td>
+          <td>{{ rutina.imc_min }}</td>
+          <td>{{ rutina.imc_max }}</td>
+          <td>{{ rutina.descripcion|truncatewords:10 }}</td>
+          <td class="text-muted">
+  <em>En desarrollo</em>
+</td>
+
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center py-3 text-muted">
+            No hay rutinas base registradas.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

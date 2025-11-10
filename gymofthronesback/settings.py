@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,10 +25,7 @@ SECRET_KEY = 'django-insecure-nb6j4k-0=)di1($n1(4np%ioh*3toqhq#o3a@-whkpt4la#%q+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
-
-
 
 # Application definition
 
@@ -66,8 +64,9 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'gymofthronesback.urls'
+WSGI_APPLICATION = 'gymofthronesback.wsgi.application'
 
-import os
+
 
 TEMPLATES_DIR = os.path.join(BASE_DIR, 'templates')
 TEMPLATES = [
@@ -85,7 +84,6 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'gymofthronesback.wsgi.application'
 
 
 # Database
@@ -99,22 +97,21 @@ DATABASES = {
 }
 
 
+
+AUTH_USER_MODEL = 'users.Usuario'
+LOGIN_URL = 'login'
+LOGOUT_REDIRECT_URL = '/users/login/'
+LOGIN_REDIRECT_URL = 'dashboard_admin'
+
+
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
 
@@ -122,15 +119,15 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 LANGUAGE_CODE = 'es-cl'
-
 TIME_ZONE = 'America/Santiago' 
-
-USE_THOUSAND_SEPARATOR = True
-
 USE_I18N = True
 USE_L10N = True              
 USE_TZ = True         
 
+
+
+
+USE_THOUSAND_SEPARATOR = True
 DECIMAL_SEPARATOR = ','
 THOUSAND_SEPARATOR = '.'
 NUMBER_GROUPING = 3
@@ -139,24 +136,13 @@ NUMBER_GROUPING = 3
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
-
-
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-AUTH_USER_MODEL = 'users.Usuario'
-
-LOGIN_URL = 'login'
-LOGOUT_REDIRECT_URL = 'login'
-LOGIN_REDIRECT_URL = 'dashboard_admin'  # se usa por defecto si no se especifica otra
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
-
-LOGOUT_REDIRECT_URL = '/users/login/'

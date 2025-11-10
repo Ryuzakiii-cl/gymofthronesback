@@ -1,0 +1,79 @@
+{% extends 'core/base_dashboard.html' %}
+{% load static %}
+
+{% block title %}Mis Rutinas{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold mb-0">
+      <img src="{% static 'img/planes.png' %}" alt="icono pesas" class="me-2">
+      Mis Rutinas
+    </h3>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-striped align-middle shadow-sm">
+      <thead class="table-dark">
+        <tr>
+          <th>Título</th>
+          <th>Profesor</th>
+          <th>Objetivo</th>
+          <th>IMC Ref.</th>
+          <th>Fecha de Asignación</th>
+          <th>Estado</th>
+          <th class="text-center">PDF</th>  {# 🩶 corregido text-align-center → class="text-center" #}
+        </tr>
+      </thead>
+      <tbody>
+        {% for rutina in rutinas %}
+        <tr>
+          <td>{{ rutina.titulo }}</td>
+          <td>{{ rutina.profesor.nombre }} {{ rutina.profesor.apellido }}</td>
+          <td>{{ rutina.socio.get_objetivo_display }}</td>
+          <td>{{ rutina.imc_referencia|default:"-" }}</td>
+          <td>{{ rutina.fecha_asignacion|date:"d/m/Y H:i" }}</td>
+          <td>
+            {% if rutina.estado == 'activa' %}
+              <span class="badge bg-success">Activa</span>
+            {% else %}
+              <span class="badge bg-secondary">Inactiva</span>
+            {% endif %}
+          </td>
+
+          <td class="text-center">
+            {% if rutina.archivo_pdf %}
+              <div class="btn-group" role="group" aria-label="Acciones PDF">
+                <!-- 👁 Ver PDF -->
+                <a href="{{ rutina.archivo_pdf.url }}"
+                   target="_blank"
+                   class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 rounded-pill px-3 py-1">
+                  <i class="ph ph-eye fs-5"></i>
+                  <span>Ver</span>
+                </a>
+
+                <!-- ⬇️ Descargar PDF -->
+                <a href="{{ rutina.archivo_pdf.url }}"
+                   download
+                   class="btn btn-sm btn-outline-success d-flex align-items-center gap-1 rounded-pill px-3 py-1">
+                  <i class="ph ph-download-simple fs-5"></i>
+                  <span>Descargar</span>
+                </a>
+              </div>
+            {% else %}
+              <span class="text-muted">No disponible</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center py-3 text-muted">
+            No tienes rutinas registradas.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

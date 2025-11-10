@@ -19,7 +19,7 @@ class Pago(models.Model):
     plan = models.ForeignKey(Plan, on_delete=models.SET_NULL, null=True, blank=True)
     socio_plan = models.ForeignKey(SocioPlan, on_delete=models.SET_NULL, null=True, blank=True)
     fecha_pago = models.DateField(auto_now_add=True)
-    monto = models.IntegerField(("Monto $"))
+    monto = models.IntegerField(("Monto"))
     forma_pago = models.CharField(max_length=20, choices=FORMA_PAGO_CHOICES)
     observaciones = models.TextField(blank=True, null=True)
     estado = models.CharField(max_length=15, choices=ESTADO_CHOICES, default='pendiente')

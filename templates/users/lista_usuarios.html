@@ -1,10 +1,8 @@
 {% extends 'core/base_dashboard.html' %}
 {% load static %}
-
 {% block title %}Usuarios{% endblock %}
 
 {% block content %}
-
 <div class="container mt-3">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h3 class="fw-bold text-dark">
@@ -28,18 +26,8 @@
     <span class="input-group-text">
       <img src="{% static 'img/lupa.gif' %}" alt="icono de lupa">
     </span>
-    <input
-      type="text"
-      id="buscador"
-      class="form-control"
-      placeholder="Buscar por nombre o apellido..."
-    >
-    <button
-      class="btn btn-outline-secondary"
-      type="button"
-      id="btnLimpiar"
-      title="Limpiar búsqueda"
-    >❌</button>
+    <input type="text" id="buscador" class="form-control" placeholder="Buscar por nombre o apellido...">
+    <button class="btn btn-outline-secondary" type="button" id="btnLimpiar" title="Limpiar búsqueda">❌</button>
   </div>
 
   <!-- 🧾 Tabla -->
@@ -51,6 +39,7 @@
           <th>Nombre</th>
           <th>Correo</th>
           <th>Rol</th>
+          <th>Especialidad</th>
           <th>Estado</th>
           <th>Acciones</th>
         </tr>
@@ -61,7 +50,15 @@
           <td>{{ usuario.rut_formateado }}</td>
           <td>{{ usuario.nombre }} {{ usuario.apellido }}</td>
           <td>{{ usuario.correo }}</td>
-          <td class="text-capitalize">{{ usuario.rol }}</td>
+          <td class="text-capitalize">{{ usuario.get_rol_display }}</td>
+          <td>
+            {% if usuario.rol == 'profesor' %}
+              {{ usuario.get_especialidad_display|default:"—" }}
+            {% else %}
+              No aplica
+            {% endif %}
+          </td>
+
           <td>
             {% if usuario.is_active %}
               <span class="badge bg-success">Activo</span>
@@ -75,13 +72,12 @@
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="6" class="text-center">No hay usuarios registrados.</td></tr>
+        <tr><td colspan="7" class="text-center">No hay usuarios registrados.</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
-
 {% endblock %}
 
 {% block extra_js %}

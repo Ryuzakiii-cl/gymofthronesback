@@ -1,10 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.utils import timezone  # ✅ agregado
+from django.utils import timezone 
 from .models import Pago
 from apps.socios.models import Socio
 from apps.planes.models import Plan, SocioPlan
+from apps.core.utils import formatear_numero
+from apps.core.decorators import es_socio
 
 
 # --- Permisos ---
@@ -13,27 +14,9 @@ def es_admin_o_superadmin(user):
 
 
 
-def formatear_numero(valor):
-    """Convierte número a formato chileno: 1.234.567"""
-    try:
-        return f"{int(valor):,}".replace(",", ".")
-    except (TypeError, ValueError):
-        return "0"
-
-
-# --- LISTAR PAGOS ---
-@login_required
-@user_passes_test(es_admin_o_superadmin)
-def lista_pagos(request):
-    pagos = Pago.objects.select_related('socio', 'plan').order_by('-fecha_pago')
-
-    # Formatea el monto con separador de miles
-    for p in pagos:
-        p.monto_formateado = formatear_numero(p.monto)
-
-    return render(request, 'pagos/lista_pagos.html', {'pagos': pagos})
-
-
+# ===============================
+# CRUD DE PAGOS
+# ===============================
 
 # --- CREAR PAGO ---
 @login_required
@@ -68,6 +51,18 @@ def crear_pago(request):
 
     return render(request, 'pagos/crear_pago.html', {'socios': socios, 'planes': planes})
 
+# --- LISTAR PAGOS ---
+@login_required
+@user_passes_test(es_admin_o_superadmin)
+def lista_pagos(request):
+    pagos = Pago.objects.select_related('socio', 'plan').order_by('-fecha_pago')
+
+    # Formatea el monto con separador de miles
+    for p in pagos:
+        p.monto_formateado = formatear_numero(p.monto)
+
+    return render(request, 'pagos/lista_pagos.html', {'pagos': pagos})
+
 
 # --- EDITAR PAGO ---
 @login_required
@@ -97,3 +92,24 @@ def eliminar_pago(request, pago_id):
     pago = get_object_or_404(Pago, id=pago_id)
     pago.delete()
     return redirect('/pagos/?success=deleted')
+
+
+
+
+@login_required
+@user_passes_test(es_socio)
+def pagos_socio(request):
+    """Muestra solo los pagos del socio autenticado."""
+    pagos = Pago.objects.filter(socio__rut=request.user.rut).order_by('-fecha_pago')
+
+    # Opcional: cálculo total de lo pagado
+    total_pagado = 0
+    for p in pagos:
+        p.monto_formateado = formatear_numero(p.monto)
+        total_pagado += p.monto
+
+    context = {
+        'pagos': pagos,
+        'total_pagado': formatear_numero(total_pagado),
+    }
+    return render(request, 'pagos/pagos_socio.html', context)

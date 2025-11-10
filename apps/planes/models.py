@@ -5,7 +5,7 @@ class Plan(models.Model):
     nombre = models.CharField(max_length=100, unique=True)
     descripcion = models.TextField(blank=True, null=True)
     precio = models.IntegerField("Precio")
-    duracion = models.PositiveIntegerField(help_text="Duración en días")
+    duracion = models.PositiveIntegerField(help_text="Duración (días)")
 
     # 🔹 Nuevos campos: control de acceso
     puede_reservar_talleres = models.BooleanField(default=False)
@@ -33,7 +33,7 @@ class SocioPlan(models.Model):
     plan = models.ForeignKey(Plan, on_delete=models.CASCADE)
     fecInicio = models.DateField()
     fecFin = models.DateField()
-    monto_pagado = models.IntegerField("Monto Pagado")
+    monto_pagado = models.IntegerField("Monto Pagado", default=0)
     estado = models.BooleanField(choices=ESTADO_CHOICES, default=True)
 
     def __str__(self):

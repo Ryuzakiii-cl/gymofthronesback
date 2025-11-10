@@ -8,44 +8,83 @@
 {% endblock %}
 
 {% block content %}
-  <div class="container mt-4">
-    <h3 class="fw-bold mb-4">✏️ Editar Socio</h3>
+<div class="container mt-4">
+  <h3 class="fw-bold mb-4">✏️ Editar Socio</h3>
 
-    <form method="POST" class="card p-4 shadow-sm">
-      {% csrf_token %}
-  <div class="row mb-3">
-    <div class="col-md-4">
-      <label class="form-label">RUT</label>
-      <input type="text" name="rut" class="form-control"
-            value="{{ socio.rut }}" placeholder="Ej: 12345678-9" required>
-    </div>
-    <div class="col-md-4">
-      <label class="form-label">Nombre</label>
-      <input type="text" name="nombre" class="form-control" value="{{ socio.nombre }}" required>
-    </div>
-    <div class="col-md-4">
-      <label class="form-label">Apellido Paterno</label>
-      <input type="text" name="apellido_paterno" class="form-control" value="{{ socio.apellido_paterno }}" required>
-    </div>
-  </div>
+  <form method="POST" class="card p-4 shadow-sm">
+    {% csrf_token %}
 
+    <!-- Datos personales -->
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <label class="form-label">RUT</label>
+        <input type="text" name="rut" class="form-control" value="{{ socio.rut }}" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Nombre</label>
+        <input type="text" name="nombre" class="form-control" value="{{ socio.nombre }}" required>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Apellido Paterno</label>
+        <input type="text" name="apellido_paterno" class="form-control" value="{{ socio.apellido_paterno }}" required>
+      </div>
+    </div>
 
     <div class="row mb-3">
-      <div class="col-md-6">
+      <div class="col-md-4">
+        <label class="form-label">Apellido Materno</label>
+        <input type="text" name="apellido_materno" class="form-control" value="{{ socio.apellido_materno }}">
+      </div>
+      <div class="col-md-4">
         <label class="form-label">Correo</label>
         <input type="email" name="correo" class="form-control" value="{{ socio.correo }}" required>
       </div>
-      <div class="col-md-6">
+      <div class="col-md-4">
         <label class="form-label">Teléfono</label>
         <input type="text" name="telefono" class="form-control" value="{{ socio.telefono }}">
       </div>
-      
     </div>
-<div class="form-check mb-3">
-  <input type="checkbox" class="form-check-input" id="estado" name="estado"
-         {% if socio.estado %}checked{% endif %}>
-  <label class="form-check-label" for="estado">Socio activo</label>
-</div>
+
+    <!-- Datos físicos -->
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <label class="form-label">Peso (kg)</label>
+        <input type="number" step="0.01" name="peso" class="form-control" value="{{ socio.peso }}">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Altura (m)</label>
+        <input type="number" step="0.01" name="altura" class="form-control" value="{{ socio.altura }}">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Objetivo</label>
+        <select name="objetivo" class="form-select">
+          {% for valor, texto in socio.objetivos_choices %}
+            <option value="{{ valor }}" {% if socio.objetivo == valor %}selected{% endif %}>{{ texto }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <!-- Profesor -->
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label class="form-label">Profesor Asignado</label>
+        <select name="profesor" class="form-select">
+          <option value="">-- Sin asignar --</option>
+          {% for profesor in profesores %}
+            <option value="{{ profesor.id }}" {% if socio.profesor_asignado and profesor.id == socio.profesor_asignado.id %}selected{% endif %}>
+              {{ profesor.nombre }} {{ profesor.apellido }} - {{ profesor.get_especialidad_display }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-6 d-flex align-items-center">
+        <div class="form-check mt-4">
+          <input type="checkbox" class="form-check-input" id="estado" name="estado" {% if socio.estado %}checked{% endif %}>
+          <label class="form-check-label" for="estado">Socio activo</label>
+        </div>
+      </div>
+    </div>
 
     {% if socio.plan_actual %}
       <div class="alert alert-info mt-3">

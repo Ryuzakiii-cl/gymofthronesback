@@ -1,0 +1,4 @@
+184416999	superadmin		 
+187459683	admin		 
+201536248	profesor	 
+216596352   alumno

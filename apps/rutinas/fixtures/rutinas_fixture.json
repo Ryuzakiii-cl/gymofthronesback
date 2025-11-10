@@ -1,0 +1,123 @@
+[
+  {
+    "model": "rutinas.rutinabase",
+    "fields": {
+      "titulo": "Pérdida de Peso - Nivel Inicial",
+      "descripcion": "Rutina de 30 días enfocada en reducir grasa corporal mediante ejercicios cardiovasculares y fuerza ligera.",
+      "objetivo": "bajar_peso",
+      "imc_min": 25.0,
+      "imc_max": 40.0,
+      "contenido": "Día 1: Caminata rápida 40 min.\nDía 2: Circuito fuerza total (3x12): Sentadillas, flexiones, abdominales, plancha 30s.\nDía 3: Bicicleta o elíptica 30 min.\nDía 4: Descanso activo (yoga o movilidad).\nDía 5: Repetir Día 2.\nDuración total: 30 días."
+    }
+  },
+  {
+    "model": "rutinas.rutinabase",
+    "fields": {
+      "titulo": "Aumento de Masa Muscular - Nivel Intermedio",
+      "descripcion": "Rutina de 30 días para desarrollar masa muscular con énfasis en fuerza progresiva.",
+      "objetivo": "subir_masa",
+      "imc_min": 18.5,
+      "imc_max": 25.0,
+      "contenido": "Día 1: Press banca, dominadas, curl bíceps, tríceps polea (4x10).\nDía 2: Sentadilla, peso muerto, estocadas (4x10).\nDía 3: Descanso activo.\nDía 4: Repetir Día 1.\nDía 5: Repetir Día 2.\nDuración total: 30 días."
+    }
+  },
+  {
+    "model": "rutinas.rutinabase",
+    "fields": {
+      "titulo": "Definición y Quema de Grasa - Nivel Intermedio",
+      "descripcion": "Rutina de 30 días tipo HIIT enfocada en definición muscular y control de peso.",
+      "objetivo": "bajar_grasa",
+      "imc_min": 24.0,
+      "imc_max": 32.0,
+      "contenido": "Día 1: HIIT 30 min (1 min trabajo / 1 min descanso).\nDía 2: Circuito con pesas (3x15).\nDía 3: Cardio 40 min.\nDía 4: Core + movilidad.\nDía 5: Repetir Día 1.\nDuración total: 30 días."
+    }
+  },
+  {
+    "model": "rutinas.rutinabase",
+    "fields": {
+      "titulo": "Mantenimiento General - Nivel Básico",
+      "descripcion": "Rutina de 30 días para mantener forma física general con equilibrio entre fuerza y movilidad.",
+      "objetivo": "mantener",
+      "imc_min": 18.5,
+      "imc_max": 27.0,
+      "contenido": "Día 1: Cardio ligero 30 min.\nDía 2: Full body (3x12): sentadilla, press hombros, remo, abdominales.\nDía 3: Caminata o trote 25 min.\nDía 4: Yoga o estiramientos.\nDía 5: Repetir Día 2.\nDuración total: 30 días."
+    }
+  },
+  {
+    "model": "rutinas.rutinabase",
+    "fields": {
+      "titulo": "Programa de Fuerza - Nivel Avanzado",
+      "descripcion": "Entrenamiento de 30 días de levantamiento progresivo para aumentar fuerza máxima y control postural.",
+      "objetivo": "aumentar_fuerza",
+      "imc_min": 18.5,
+      "imc_max": 35.0,
+      "contenido": "Día 1: Sentadilla 5x5 + Peso muerto 5x5.\nDía 2: Press banca 5x5 + Remo barra 5x5.\nDía 3: Descanso activo.\nDía 4: Press militar + dominadas.\nDía 5: Repetir Día 1.\nDuración total: 30 días."
+    }
+  },
+  {
+    "model": "rutinas.rutinabase",
+    "fields": {
+      "titulo": "Resistencia y Cardio - Nivel Intermedio",
+      "descripcion": "Rutina de 30 días enfocada en mejorar la resistencia aeróbica y cardiovascular.",
+      "objetivo": "mejorar_resistencia",
+      "imc_min": 18.5,
+      "imc_max": 35.0,
+      "contenido": "Día 1: Trote continuo 30 min.\nDía 2: Intervalos (1 min rápido / 2 min lento) x 8.\nDía 3: Bicicleta 45 min.\nDía 4: Descanso activo.\nDía 5: Repetir Día 2.\nDuración total: 30 días."
+    }
+  },
+  {
+    "model": "rutinas.rutinabase",
+    "fields": {
+      "titulo": "Flexibilidad y Movilidad - Nivel Básico",
+      "descripcion": "Rutina de 30 días centrada en mejorar la movilidad articular y flexibilidad muscular.",
+      "objetivo": "mejorar_flexibilidad",
+      "imc_min": 18.5,
+      "imc_max": 35.0,
+      "contenido": "Día 1: Estiramientos dinámicos 20 min.\nDía 2: Yoga para principiantes 30 min.\nDía 3: Movilidad de cadera y hombros.\nDía 4: Pilates 25 min.\nDía 5: Repetir Día 1.\nDuración total: 30 días."
+    }
+  },
+  {
+    "model": "rutinas.rutinabase",
+    "fields": {
+      "titulo": "Rendimiento Deportivo - Nivel Avanzado",
+      "descripcion": "Rutina de 30 días para optimizar fuerza, velocidad y coordinación funcional.",
+      "objetivo": "rendimiento_deportivo",
+      "imc_min": 18.5,
+      "imc_max": 30.0,
+      "contenido": "Día 1: Entrenamiento funcional + pliometría.\nDía 2: Fuerza específica (3x8).\nDía 3: Cardio intervalado.\nDía 4: Técnica deportiva.\nDía 5: Repetir Día 1.\nDuración total: 30 días."
+    }
+  },
+  {
+    "model": "rutinas.rutinabase",
+    "fields": {
+      "titulo": "Salud y Bienestar - Nivel Suave",
+      "descripcion": "Rutina de 30 días enfocada en reducir el estrés y mejorar la salud general.",
+      "objetivo": "salud_bienestar",
+      "imc_min": 18.0,
+      "imc_max": 35.0,
+      "contenido": "Día 1: Caminata 30 min.\nDía 2: Yoga o respiración consciente.\nDía 3: Ejercicios de movilidad articular.\nDía 4: Descanso.\nDía 5: Repetir ciclo.\nDuración total: 30 días."
+    }
+  },
+  {
+    "model": "rutinas.rutinabase",
+    "fields": {
+      "titulo": "Rehabilitación y Recuperación - Nivel Terapéutico",
+      "descripcion": "Rutina de 30 días suave, orientada a movilidad controlada y fortalecimiento progresivo post-lesión.",
+      "objetivo": "rehabilitacion",
+      "imc_min": 18.0,
+      "imc_max": 40.0,
+      "contenido": "Día 1: Movilidad articular suave.\nDía 2: Ejercicios isométricos.\nDía 3: Respiración diafragmática.\nDía 4: Caminata corta.\nDía 5: Repetir Día 1.\nDuración total: 30 días."
+    }
+  },
+  {
+    "model": "rutinas.rutinabase",
+    "fields": {
+      "titulo": "Tonificación y Definición - Nivel Intermedio",
+      "descripcion": "Rutina de 30 días para tonificar musculatura y mejorar estética corporal.",
+      "objetivo": "tonificar",
+      "imc_min": 18.5,
+      "imc_max": 30.0,
+      "contenido": "Día 1: Circuito full body (3x15).\nDía 2: Cardio 30 min.\nDía 3: Abdomen + glúteos (4x20).\nDía 4: Descanso activo.\nDía 5: Repetir Día 1.\nDuración total: 30 días."
+    }
+  }
+]
