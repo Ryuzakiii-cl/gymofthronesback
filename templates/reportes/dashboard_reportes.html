@@ -9,17 +9,18 @@
 
 <div class="container-fluid">
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="fw-bold text-dark"><img src="{% static 'img/grafico.png' %}" alt="icono planes"> Panel de Reportes y Finanzas</h3>
+    <h3 class="fw-bold text-dark col-md-4" ><img src="{% static 'img/grafico.png' %}" alt="icono planes"> Reportes y Finanzas</h3>
 
     <form method="get" class="d-flex gap-2 align-items-center">
       <input type="date" name="inicio" value="{{ inicio|date:'Y-m-d' }}" class="form-control">
       <input type="date" name="fin" value="{{ fin|date:'Y-m-d' }}" class="form-control">
       <select name="tipo" class="form-select">
-        <option value="socios" {% if tipo == 'socios' %}selected{% endif %}>👥 Socios</option>
-        <option value="finanzas" {% if tipo == 'finanzas' %}selected{% endif %}>💰 Finanzas</option>
-        <option value="actividad" {% if tipo == 'actividad' %}selected{% endif %}>🏋️ Actividad</option>
+        <option value="socios" {% if tipo == 'socios' %}selected{% endif %}> Socios</option>
+        <option value="finanzas" {% if tipo == 'finanzas' %}selected{% endif %}> Finanzas</option>
+        <option value="actividad" {% if tipo == 'actividad' %}selected{% endif %}> Actividad</option>
       </select>
       <button type="submit" class="btn btn-dark text-warning fw-bold">Filtrar</button>
+      <button type="button" class="btn btn-primary fw-bold" id="btn-limpiar">Limpiar</button>
       <a href="{% url 'exportar_excel' %}?tipo={{ tipo }}" 
          class="btn btn-success fw-bold d-flex align-items-center gap-2 shadow-sm export-btn">
         Exportar <i class="ph ph-file-xls" style="font-size: 1.3rem;"></i>
@@ -34,7 +35,7 @@
         <h6>Socios activos</h6><h3 class="fw-bold">{{ socios_activos }}</h3>
       </div></div>
     </div>
-    <div class="col-md-2">
+    <div class="col-md-4">
       <div class="card card-resumen text-center"><div class="card-body">
         <h6>Ingresos totales 2025</h6><h3 class="fw-bold">${{ ingresos_totales }}</h3>
       </div></div>
@@ -60,28 +61,28 @@
   <div class="row">
     <div class="col-md-6 mb-4">
       <div class="card card-grafico"><div class="card-body">
-        <h6 class="fw-bold mb-2">👥 Socios por tipo de plan</h6>
+        <h6 class="fw-bold mb-2"><img src="{% static 'img/socios.png' %}" alt="icono admin" class="me-2"> Socios por tipo de plan</h6>
         <canvas id="grafico_socios_plan"></canvas>
       </div></div>
     </div>
 
     <div class="col-md-6 mb-4">
       <div class="card card-grafico"><div class="card-body">
-        <h6 class="fw-bold mb-2">🥧 Distribución de socios por plan</h6>
+        <h6 class="fw-bold mb-2"><img src="{% static 'img/pelotab.png' %}" alt="icono pelota basket" class="me-2"> Distribución de socios por plan</h6>
         <canvas id="grafico_donut"></canvas>
       </div></div>
     </div>
 
     <div class="col-md-12 mb-4">
       <div class="card card-grafico"><div class="card-body">
-        <h6 class="fw-bold mb-2">📈 Evolución mensual de socios activos</h6>
+        <h6 class="fw-bold mb-2"><img src="{% static 'img/glinea.png' %}" alt="icono admin" class="me-2"> Evolución mensual de socios activos</h6>
         <canvas id="grafico_linea"></canvas>
       </div></div>
     </div>
 
     <div class="col-md-12 mb-4">
       <div class="card card-grafico"><div class="card-body">
-        <h6 class="fw-bold mb-2">📊 Crecimiento por tipo de plan</h6>
+        <h6 class="fw-bold mb-2"><img src="{% static 'img/grafico.png' %}" alt="icono admin" class="me-2"> Crecimiento por tipo de plan</h6>
         <canvas id="grafico_area"></canvas>
       </div></div>
     </div>

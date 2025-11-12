@@ -7,7 +7,7 @@
 <div class="container mt-4">
 
   <h3 class="fw-bold mb-4">
-    <img src="{% static 'img/admin.png' %}" alt="icono admin" class="me-2">
+    <img src="{% static 'img/engranaje.gif' %}" alt="icono admin" class="me-2">
     Panel General del Sistema
   </h3>
 
@@ -41,14 +41,14 @@
 
   <!-- Estado de socios -->
   <div class="card shadow-sm p-4 mb-4">
-    <h5 class="fw-bold mb-3">📊 Estado de Socios</h5>
+    <h5 class="fw-bold mb-3"><img src="{% static 'img/grafico.png' %}" alt="icono graficos" class="me-2"> Estado de Socios</h5>
     <p>Activos: <span class="fw-bold text-success">{{ socios_activos }}</span></p>
     <p>Inactivos: <span class="fw-bold text-danger">{{ socios_inactivos }}</span></p>
   </div>
 
   <!-- Planes y Rutinas -->
   <div class="card shadow-sm p-4 mb-4">
-    <h5 class="fw-bold mb-3">🧾 Planes y Rutinas</h5>
+    <h5 class="fw-bold mb-3"><img src="{% static 'img/planes.png' %}" alt="icono planes" class="me-2"> Planes y Rutinas</h5>
     <p>Planes Vigentes: <span class="fw-bold text-success">{{ planes_vigentes }}</span></p>
     <p>Planes Vencidos: <span class="fw-bold text-secondary">{{ planes_vencidos }}</span></p>
     <p>Rutinas Activas: <span class="fw-bold text-info">{{ rutinas_activas }}</span></p>
@@ -58,7 +58,7 @@
   <div class="row">
     <div class="col-md-6 mb-4">
       <div class="card shadow-sm p-4">
-        <h5 class="fw-bold mb-3">🧍‍♂️ Últimos Socios Registrados</h5>
+        <h5 class="fw-bold mb-3"><img src="{% static 'img/socios.png' %}" alt="icono admin" class="me-2"> Últimos Socios Registrados</h5>
         <ul class="list-group list-group-flush">
           {% for socio in ultimos_socios %}
           <li class="list-group-item">{{ socio.nombre }} {{ socio.apellido_paterno }} - {{ socio.correo }}</li>
@@ -71,7 +71,7 @@
 
     <div class="col-md-6 mb-4">
       <div class="card shadow-sm p-4">
-        <h5 class="fw-bold mb-3">🏋️ Últimas Rutinas Asignadas</h5>
+        <h5 class="fw-bold mb-3"><img src="{% static 'img/rutinas.png' %}" alt="icono admin" class="me-2"> Últimas Rutinas Asignadas</h5>
         <ul class="list-group list-group-flush">
           {% for rutina in ultimas_rutinas %}
           <li class="list-group-item">

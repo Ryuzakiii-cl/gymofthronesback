@@ -102,4 +102,14 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
+
+  // 🧹 Botón "Limpiar filtros"
+  const btnLimpiar = document.getElementById('btn-limpiar');
+  if (btnLimpiar) {
+    btnLimpiar.addEventListener('click', function() {
+      // Redirige a la misma ruta sin parámetros GET
+      window.location.href = window.location.pathname;
+    });
+  }
+
 });
