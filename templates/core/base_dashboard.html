@@ -21,7 +21,6 @@
     </div>
 
     <ul>
-      <!-- 🧠 SUPERADMIN -->
       {% if request.user.rol == 'superadmin' %}
         <li><a href="{% url 'dashboard_superadmin' %}"><i class="ph ph-house"></i><span>inicio</span></a></li>
         <li><a href="{% url 'lista_usuarios' %}"><i class="ph ph-user"></i><span>Usuarios</span></a></li>
@@ -29,8 +28,6 @@
         <li><a href="{% url 'lista_planes' %}"><i class="ph ph-clipboard-text"></i><span>Planes</span></a></li>
         <li><a href="{% url 'canchas_list' %}"><i class="ph ph-soccer-ball"></i><span>Canchas</span></a></li>
         <li><a href="{% url 'lista_pagos' %}"><i class="ph ph-credit-card"></i><span>Pagos</span></a></li>
-
-        <!-- Submenú de Reservas -->
         <li>
           <a href="javascript:void(0)" id="toggleReservas">
             <div><i class="ph ph-calendar"></i><span>Reservas</span></div>
@@ -41,10 +38,8 @@
             <a href="{% url 'calendario_talleres' %}"><i class="ph ph-person-simple-walk"></i> Talleres</a>
           </div>
         </li>
-
         <li><a href="{% url 'dashboard_reportes' %}"><i class="ph ph-chart-line"></i><span>Reportes</span></a></li>
 
-      <!-- 🧾 ADMIN -->
       {% elif request.user.rol == 'admin' %}
         <li><a href="{% url 'dashboard_admin' %}"><i class="ph ph-house"></i><span>inicio</span></a></li>
         <li><a href="{% url 'lista_socios' %}"><i class="ph ph-users"></i><span>Socios</span></a></li>
@@ -61,16 +56,12 @@
           </div>
         </li>
 
-      <!-- 🏋🏻 PROFESOR -->
       {% elif request.user.rol == 'profesor' %}
         <li><a href="{% url 'dashboard_profesor' %}"><i class="ph ph-house"></i><span>inicio</span></a></li>
         <li><a href="{% url 'calendario_talleres' %}"><i class="ph ph-person-simple-walk"></i><span>Mis Talleres</span></a></li>
         <li><a href="{% url 'mis_alumnos' %}"><i class="ph ph-users"></i><span>Mis Alumnos</span></a></li>
         <li><a href="{% url 'lista_rutinas' %}"><i class="ph ph-barbell"></i><span>Rutinas</span></a></li>
 
-
-
-      <!-- 🧍‍♂️ SOCIO -->
       {% elif request.user.rol == 'socio' %}
         <li><a href="{% url 'dashboard_socio' %}"><i class="ph ph-house"></i><span>inicio</span></a></li>
         <li><a href="{% url 'pagos_socio' %}"><i class="ph ph-credit-card"></i><span>Pagos</span></a></li>
@@ -83,6 +74,7 @@
 
   <!-- 📋 CONTENIDO PRINCIPAL -->
   <div class="main-content">
+
     <!-- 🔝 TOPBAR -->
     <div class="topbar d-flex justify-content-between align-items-center">
       <div class="user-info">
@@ -93,6 +85,15 @@
       </div>
 
       <div class="d-flex align-items-center gap-3">
+
+        <!-- 🌤️ CLIMA -->
+        <div id="weather-box" class="d-flex align-items-center gap-1 text-dark fw-semibold"
+              style="font-size:15px;">
+            <span id="weather-icon">⏳</span>
+            <span id="weather-temp">--°C</span>
+            <span id="weather-location">Cargando...</span>
+        </div>
+
         <a href="{% url 'perfil_usuario' %}" class="btn btn-outline-dark d-flex align-items-center gap-1 fw-semibold">
           <i class="ph ph-gear"></i> Cuenta
         </a>
@@ -102,7 +103,6 @@
       </div>
     </div>
 
-    <!-- 📢 MENSAJES -->
     {% if messages %}
       <div class="container mt-3">
         {% for message in messages %}
@@ -114,7 +114,6 @@
       </div>
     {% endif %}
 
-    <!-- 🧩 CONTENIDO -->
     {% block content %}{% endblock %}
   </div>
 
