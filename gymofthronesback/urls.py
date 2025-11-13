@@ -19,6 +19,7 @@ urlpatterns = [
     path('socios/', include('apps.socios.urls')),
     path('talleres/', include('apps.talleres.urls')),
     path('rutinas/', include('apps.rutinas.urls')), 
+    path("", include("apps.core.urls")),
 ]
 
 handler404 = 'apps.users.views.error_404'

@@ -15,10 +15,8 @@
 
 
 // ----------------------------------------
-//  CLIMA — GPS REAL + OPENWEATHERMAP
+//  CLIMA — SEGURO VÍA DJANGO BACKEND
 // ----------------------------------------
-
-const OPENWEATHER_KEY = "2ab2f2161c225383a63ad8e77084caa1";
 
 // --- UI Helpers ---
 function setWeatherUI(icon, temp, location) {
@@ -41,34 +39,25 @@ function chooseIcon(condition) {
     return "🌤️";
 }
 
-// --- Obtener clima y comuna REAL por GPS ---
-async function getWeatherByCoords(lat, lon) {
+// ------------ LLAMA A DJANGO (SIN API KEY EN JS) ------------
+async function getWeatherSecure(lat, lon) {
     try {
-        // 1) Clima desde OpenWeather
-        const weatherURL = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OPENWEATHER_KEY}&units=metric&lang=es`;
-        const weatherData = await fetch(weatherURL).then(r => r.json());
+        const response = await fetch(`/api/weather/?lat=${lat}&lon=${lon}`);
+        const data = await response.json();
 
-        if (!weatherData || weatherData.cod !== 200) throw new Error("Weather API error");
+        if (data.error) {
+            setWeatherUI("⚠️", "--°C", "Sin datos");
+            return;
+        }
 
-        const icon = chooseIcon(weatherData.weather[0].main);
-        const temp = `${Math.round(weatherData.main.temp)}°C`;
-
-        // 2) Reverse geocoding DETALLADO (comuna real)
-        const reverseURL = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`;
-        const geo = await fetch(reverseURL).then(r => r.json());
-
-        const comuna =
-            geo.address.suburb ||
-            geo.address.city ||
-            geo.address.town ||
-            geo.address.village ||
-            geo.address.municipality ||
-            "Ubicación desconocida";
+        const icon = chooseIcon(data.condition);
+        const temp = `${data.temp}°C`;
+        const comuna = data.location;
 
         setWeatherUI(icon, temp, comuna);
 
     } catch (error) {
-        console.log("Error de clima o geolocalización:", error);
+        console.log("Error obteniendo clima:", error);
         setWeatherUI("⚠️", "--°C", "Sin datos");
     }
 }
@@ -84,7 +73,7 @@ function initWeather() {
         pos => {
             const lat = pos.coords.latitude;
             const lon = pos.coords.longitude;
-            getWeatherByCoords(lat, lon);
+            getWeatherSecure(lat, lon);  // <--- AHORA LLAMA AL BACKEND
         },
         err => {
             console.log("GPS bloqueado:", err);
