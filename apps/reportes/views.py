@@ -82,13 +82,21 @@ def dashboard_reportes(request):
     # ==========================================================
     # 🔹 GRÁFICO 1: SOCIOS POR PLAN
     # ==========================================================
+    # 🔹 GRÁFICO 1: SOCIOS POR PLAN
     socios_por_plan_qs = (
         SocioPlan.objects.filter(estado=True)
         .values('plan__nombre')
         .annotate(cantidad=Count('id'))
         .order_by('plan__nombre')
     )
-    socios_por_plan = list(socios_por_plan_qs)
+
+    socios_por_plan = [
+        {
+            "plan": p["plan__nombre"],
+            "cantidad": p["cantidad"]
+        }
+        for p in socios_por_plan_qs
+    ]
 
     # ==========================================================
     # 🔹 GRÁFICO 2: INGRESOS POR PLAN (OPTIMIZADO)

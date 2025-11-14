@@ -11,50 +11,76 @@
     <h3 class="mb-3">{% if reserva %}Editar{% else %}Nueva{% endif %} Reserva de Cancha</h3>
     <form method="POST">
       {% csrf_token %}
+
+      <!-- CANCHA -->
       <div class="mb-3">
         <label class="form-label">Cancha</label>
         <select name="cancha" class="form-select" required>
           <option value="">Seleccione...</option>
           {% for c in canchas %}
-            <option value="{{ c.id }}" {% if reserva and reserva.cancha.id == c.id %}selected{% endif %}>{{ c.nombre }} ({{ c.get_tipo_display }})</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Socio</label>
-        <select name="socio" class="form-select" required>
-          <option value="">Seleccione...</option>
-          {% for s in socios %}
-            <option value="{{ s.id }}" {% if reserva and reserva.socio.id == s.id %}selected{% endif %}>
-              {{ s.nombre }} {{ s.apellido_paterno }} - {{ s.rut }}
+            <option value="{{ c.id }}" {% if reserva and reserva.cancha.id == c.id %}selected{% endif %}>
+              {{ c.nombre }} ({{ c.get_tipo_display }})
             </option>
           {% endfor %}
         </select>
       </div>
+
+      <!-- SOCIO -->
+      <div class="mb-3">
+        <label class="form-label">Socio</label>
+        <select name="socio" class="form-select" {% if rol == 'socio' %}disabled{% endif %}>
+          {% for s in socios %}
+            <option value="{{ s.id }}"
+              {% if reserva and reserva.socio.id == s.id %}
+                selected
+              {% elif rol == 'socio' %}
+                selected
+              {% endif %}
+            >
+              {{ s.nombre }} {{ s.apellido_paterno }} - {{ s.rut }}
+            </option>
+          {% endfor %}
+        </select>
+
+        {% if rol == 'socio' %}
+          <input type="hidden" name="socio" value="{{ socios.first.id }}">
+        {% endif %}
+      </div>
+
+      <!-- FECHAS Y HORAS -->
       <div class="row g-3">
         <div class="col-md-4">
           <label class="form-label">Fecha</label>
-          <input type="date" name="fecha" class="form-control" value="{{ reserva.fecha|date:'Y-m-d' }}" required>
+          <input type="date" name="fecha" class="form-control"
+                 value="{{ reserva.fecha|date:'Y-m-d' }}" required>
         </div>
+
         <div class="col-md-4">
           <label class="form-label">Hora inicio</label>
-          <input type="time" name="hora_inicio" class="form-control" value="{{ reserva.hora_inicio|default:'' }}" required>
+          <input type="time" name="hora_inicio" class="form-control"
+                 value="{{ reserva.hora_inicio|default:'' }}" required>
         </div>
+
         <div class="col-md-4">
           <label class="form-label">Hora fin</label>
-          <input type="time" name="hora_fin" class="form-control" value="{{ reserva.hora_fin|default:'' }}" required>
+          <input type="time" name="hora_fin" class="form-control"
+                 value="{{ reserva.hora_fin|default:'' }}" required>
         </div>
       </div>
+
       {% if reserva %}
       <div class="form-check mt-3">
-        <input class="form-check-input" type="checkbox" name="estado" value="reservada" {% if reserva.estado == 'reservada' %}checked{% endif %}>
+        <input class="form-check-input" type="checkbox" name="estado"
+               value="reservada" {% if reserva.estado == 'reservada' %}checked{% endif %}>
         <label class="form-check-label">Mantener como Reservada (desmarcar equivale a Cancelada)</label>
       </div>
       {% endif %}
+
       <div class="text-end mt-4">
         <a href="{% url 'reservas_cancha_list' %}" class="btn btn-secondary">Volver</a>
         <button class="btn btn-success" type="submit">Guardar</button>
       </div>
+
     </form>
   </div>
 </div>

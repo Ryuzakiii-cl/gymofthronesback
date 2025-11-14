@@ -10,12 +10,26 @@ from apps.canchas.models import Cancha, Reserva
 from apps.talleres.models import Taller
 
 
-def es_admin_o_superadmin(user):
-    return user.is_authenticated and (getattr(user, 'rol', None) in ['admin', 'superadmin'])
+# ============================
+#   HELPERS DE PERMISOS
+# ============================
 
+def es_admin_superadmin_profesor(user):
+    """Admin / Superadmin / Profesor."""
+    return user.is_authenticated and getattr(user, 'rol', None) in ['admin', 'superadmin', 'profesor']
+
+
+def es_admin_superadmin_profesor_socio(user):
+    """Admin / Superadmin / Profesor / Socio."""
+    return user.is_authenticated and getattr(user, 'rol', None) in ['admin', 'superadmin', 'profesor', 'socio']
+
+
+# ============================
+#   CALENDARIO CANCHAS
+# ============================
 
 @login_required
-@user_passes_test(es_admin_o_superadmin)
+@user_passes_test(es_admin_superadmin_profesor_socio)
 def calendario_canchas(request):
     socios = Socio.objects.filter(estado=True).order_by('nombre', 'apellido_paterno')
     canchas = Cancha.objects.filter(activo=True).order_by('nombre')
@@ -24,8 +38,12 @@ def calendario_canchas(request):
     return render(request, 'calendario/calendario_canchas.html', context)
 
 
+# ============================
+#   CALENDARIO TALLERES
+# ============================
+
 @login_required
-@user_passes_test(es_admin_o_superadmin)
+@user_passes_test(es_admin_superadmin_profesor)
 def calendario_talleres(request):
     profesores = list(Usuario.objects.filter(rol='profesor').values('id', 'nombre', 'apellido'))
     socios = list(Socio.objects.filter(estado=True).values('id', 'nombre', 'apellido_paterno'))
@@ -35,10 +53,26 @@ def calendario_talleres(request):
     })
 
 
+# ============================
+#   EVENTOS CANCHAS (JSON)
+# ============================
+
 @login_required
 def eventos_canchas_json(request):
     eventos = []
-    reservas = Reserva.objects.filter(estado='confirmada').select_related('cancha', 'socio')
+    rol = getattr(request.user, 'rol', None)
+
+    # 🔹 SOCIO AHORA VE TODAS LAS RESERVAS, NO SOLO LAS SUYAS
+    if rol == 'socio':
+        reservas = Reserva.objects.filter(
+            estado='confirmada'
+        ).select_related('cancha', 'socio')   # 👈 AQUÍ SE QUITÓ EL FILTRO DEL RUT
+    else:
+        # Admin / Superadmin / Profesor → todas las reservas
+        reservas = Reserva.objects.filter(
+            estado='confirmada'
+        ).select_related('cancha', 'socio')
+
     for r in reservas:
         eventos.append({
             "id": r.id,
@@ -46,17 +80,22 @@ def eventos_canchas_json(request):
             "start": f"{r.fecha}T{r.hora_inicio}",
             "end": f"{r.fecha}T{r.hora_fin}",
             "color": "#ffc107",
-            "extendedProps": {   # 👈 se agregó este bloque
+            "extendedProps": {
                 "id": r.id,
                 "socio_id": r.socio.id,
                 "cancha_id": r.cancha.id,
                 "hora_inicio": str(r.hora_inicio),
-                "hora_fin": str(r.hora_fin)
-            }
+                "hora_fin": str(r.hora_fin),
+            },
         })
+
     return JsonResponse(eventos, safe=False)
 
 
+
+# ============================
+#   EVENTOS TALLERES (JSON)
+# ============================
 
 @login_required
 def eventos_talleres_json(request):
@@ -72,6 +111,6 @@ def eventos_talleres_json(request):
                 "profesor": f"{taller.profesor.nombre} {getattr(taller.profesor, 'apellido', '')}".strip(),
                 "cupos": taller.cupos,
                 "inscritos": taller.inscritos_count(),
-            }
+            },
         })
     return JsonResponse(eventos, safe=False)
