@@ -9,7 +9,7 @@
 
   <!-- Información Personal -->
   <div class="card shadow-sm p-4 mb-4">
-    <h5 class="fw-bold mb-3">📋 Información Personal</h5>
+    <h5 class="fw-bold mb-3"><img src="{% static 'img/planes.png' %}" alt="icono de planes"> Información Personal</h5>
     <p><strong>Correo:</strong> {{ request.user.correo }}</p>
     <p><strong>Plan Activo:</strong> {{ socio.plan_nombre }}</p>
     <p><strong>Vigencia del Plan:</strong> {{ socio.plan_vigencia }}</p>
@@ -27,7 +27,7 @@
 
   <!-- Estado Físico -->
   <div class="card shadow-sm p-4">
-    <h5 class="fw-bold mb-3">💪 Estado Físico</h5>
+    <h5 class="fw-bold mb-3"><img src="{% static 'img/brazo_fuerte.png' %}" alt="icono de brazo"> Estado Físico</h5>
     <p><strong>Peso:</strong> 
       {% if socio.peso %}
         {{ socio.peso }} kg
