@@ -3,30 +3,43 @@
 {% block title %}Calendario de Talleres{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="fw-bold text-dark"><img src="{% static 'img/calendario.gif' %}" alt="icono planes"> Calendario de Talleres</h3>
-    <span class="badge px-3 py-2 text-dark border border-dark bg-warning">
-      Inscribir Solo Planes Caballero - Rey • Cupos Limitados
-    </span>
-  </div>
 
-  <div id="calendar" class="bg-white p-3 rounded shadow-sm"></div>
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="fw-bold text-dark">
+            <img src="{% static 'img/calendario.gif' %}" alt="icono planes">
+            Calendario de Talleres
+        </h3>
+
+        {% if request.user.rol != 'socio' %}
+        <button class="btn btn-dark text-warning" id="btnAbrirCrearManual">Crear Taller</button>
+        {% endif %}
+    </div>
+
+    <div id="calendar" class="bg-white p-3 rounded shadow-sm"></div>
+
 </div>
 
-<!-- Modal Crear/Editar Taller -->
+<!-- ========================================================= -->
+<!-- MODAL CREAR / EDITAR -->
+<!-- ========================================================= -->
 <div class="modal fade" id="modalCrearClase" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
+
     <form id="formCrearClase" class="modal-content">
       {% csrf_token %}
+
       <div class="modal-header">
-        <h5 class="modal-title">Crear Taller</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        <h5 class="modal-title" id="tituloCrearEditar">Crear Taller</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
+
       <div class="modal-body">
         <div class="row g-3">
+
           <div class="col-md-6">
-            <label class="form-label">Nombre del taller</label>
+            <label class="form-label">Nombre del Taller</label>
             <select class="form-select" name="nombre" required>
               <option value="Yoga">Yoga</option>
               <option value="Spinning">Spinning</option>
@@ -35,395 +48,488 @@
               <option value="Entrenamiento funcional">Entrenamiento funcional</option>
             </select>
           </div>
+
           <div class="col-md-6">
             <label class="form-label">Profesor</label>
-            <select class="form-select" name="profesor_id" required id="selectProfesor"></select>
+            <select class="form-select" name="profesor_id" id="selectProfesor"
+                {% if request.user.rol == 'profesor' %} disabled {% endif %}>
+            </select>
+
+            {% if request.user.rol == 'profesor' %}
+            <!-- Hidden para enviar el valor igualmente aunque el select esté deshabilitado -->
+            <input type="hidden" name="profesor_id" value="{{ request.user.id }}">
+            {% endif %}
           </div>
+
           <div class="col-md-4">
             <label class="form-label">Cupos</label>
             <input type="number" class="form-control" name="cupos" min="1" value="10" required>
           </div>
+
           <div class="col-md-4">
             <label class="form-label">Fecha</label>
             <input type="date" class="form-control" name="fecha" id="crearFecha" required>
           </div>
+
           <div class="col-md-2">
             <label class="form-label">Inicio</label>
-            <input type="time" class="form-control" name="hora_inicio" id="crearHoraIni" step="3600" required>
+            <input type="time" class="form-control" name="hora_inicio" id="crearHoraIni" required>
           </div>
+
           <div class="col-md-2">
             <label class="form-label">Fin</label>
-            <input type="time" class="form-control" name="hora_fin" id="crearHoraFin" step="3600" required>
+            <input type="time" class="form-control" name="hora_fin" id="crearHoraFin" required>
           </div>
+
         </div>
-        <div class="alert alert-warning mt-3 d-none" id="crearError"></div>
       </div>
+
       <div class="modal-footer">
-        <button class="btn btn-dark text-warning">Crear</button>
+        <button class="btn btn-dark text-warning">Guardar</button>
       </div>
+
     </form>
   </div>
 </div>
 
-<!-- Modal Detalle Taller -->
+<!-- ========================================================= -->
+<!-- MODAL DETALLE -->
+<!-- ========================================================= -->
 <div class="modal fade" id="modalDetalleClase" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-xl modal-dialog-centered">
+
     <div class="modal-content">
+
       <div class="modal-header">
         <h5 class="modal-title" id="detalleTitulo">Detalle del Taller</h5>
-        <button type="button" class="btn btn-outline-primary btn-sm ms-2" id="btnEditarClase">Editar Taller</button>
-        <button type="button" class="btn btn-outline-danger btn-sm ms-2" id="btnEliminarClase">Eliminar Taller</button>
-        <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+
+        {% if request.user.rol == 'admin' or request.user.rol == 'superadmin' or request.user.rol == 'profesor' %}
+        <button class="btn btn-outline-primary btn-sm ms-2 d-none" id="btnEditarClase">Editar</button>
+        <button class="btn btn-outline-danger btn-sm ms-2 d-none" id="btnEliminarClase">Eliminar</button>
+        {% endif %}
+
+        <button type="button" class="btn-close ms-2" data-bs-dismiss="modal"></button>
       </div>
+
       <div class="modal-body">
+
         <div class="row g-3 mb-3">
           <div class="col-md-3"><b>Profesor:</b> <span id="detalleProfesor"></span></div>
           <div class="col-md-3"><b>Fecha:</b> <span id="detalleFecha"></span></div>
           <div class="col-md-3"><b>Horario:</b> <span id="detalleHorario"></span></div>
-          <div class="col-md-3"><b>Cupos:</b> <span id="detalleCupos"></span> / <span id="detalleInsc"></span></div>
+          <div class="col-md-3"><b>Cupos:</b> <span id="detalleCupos" class="fw-bold text-primary"></span></div>
         </div>
 
         <hr>
 
-        <h6 class="mb-2">Inscribir socio</h6>
+        {% if request.user.rol == 'socio' %}
+        <button class="btn btn-success mb-3" id="btnInscribirme">Inscribirme</button>
+        <button class="btn btn-danger mb-3 d-none" id="btnCancelarIns">Cancelar inscripción</button>
+        <hr>
+        {% endif %}
+
+        {% if request.user.rol != 'socio' %}
         <form id="formInscribir" class="row g-2 align-items-end">
           {% csrf_token %}
           <div class="col-md-6">
-            <label class="form-label">Socio</label>
             <select class="form-select" name="socio_id" id="selectSocio"></select>
           </div>
           <div class="col-md-3">
-            <button class="btn btn-dark text-warning w-100" id="btnInscribir">Inscribir</button>
+            <button class="btn btn-dark text-warning w-100">Inscribir</button>
           </div>
         </form>
-
         <hr>
+        {% endif %}
 
-        <h6 class="mb-2">Inscritos</h6>
-        <div class="table-responsive">
-          <table class="table table-sm table-bordered align-middle" id="tablaInscritos">
-            <thead class="table-light">
-              <tr>
-                <th>Socio</th>
-                <th>Asistencia</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
+        <h6>Inscritos al Taller</h6>
+
+        <table class="table table-sm table-bordered" id="tablaInscritos">
+          <thead class="table-light">
+            <tr>
+              <th>Socio</th>
+              <th>Asistencia</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
 
       </div>
     </div>
   </div>
 </div>
+
 {% endblock %}
 
 {% block extra_js %}
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
-
-
-
-
-<style>
-  #calendar {
-    min-height: 720px !important;
-    background-color: #fff;
-    border-radius: 10px;
-    padding: 10px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-  }
-  .fc { --fc-border-color: #e9ecef; font-size: 0.95rem; }
-  .fc-toolbar-title { font-weight: 700; color: #222; }
-  .fc .fc-daygrid-day { height: 100px !important; }
-</style>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-window.addEventListener('load', function() {
-  const CSRF = document.querySelector('[name=csrfmiddlewaretoken]').value;
-  const PROFESORES = {{ profesores|safe }};
-  const SOCIOS = {{ socios|safe }};
+window.addEventListener("load", function () {
 
-  const selProf = document.getElementById('selectProfesor');
-  PROFESORES.forEach(p => {
-    const opt = document.createElement('option');
-    opt.value = p.id;
-    opt.textContent = `${p.nombre} ${p.apellido || ''}`.trim();
-    selProf.appendChild(opt);
-  });
+    const USER_ROL = "{{ request.user.rol }}";
+    const CSRF = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-  const selSocio = document.getElementById('selectSocio');
-  SOCIOS.forEach(s => {
-    const opt = document.createElement('option');
-    opt.value = s.id;
-    opt.textContent = `${s.nombre} ${s.apellido_paterno || ''}`.trim();
-    selSocio.appendChild(opt);
-  });
+    const PROFESORES = {{ profesores|safe }};
+    const SOCIOS = {{ socios|safe }};
 
-  const modalCrear = new bootstrap.Modal(document.getElementById('modalCrearClase'));
-  const modalDetalle = new bootstrap.Modal(document.getElementById('modalDetalleClase'));
+    const modalCrear = new bootstrap.Modal(document.getElementById('modalCrearClase'));
+    const modalDetalle = new bootstrap.Modal(document.getElementById('modalDetalleClase'));
 
-// --- FullCalendar ---
-const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
-  initialView: 'dayGridMonth',
-  locale: 'es',
-  firstDay: 1,
-  headerToolbar: {
-    left: 'prev,next today',
-    center: 'title',
-    right: 'dayGridMonth,timeGridWeek,timeGridDay'
-  },
-  events: "{% url 'eventos_talleres_json' %}",
+    const formCrear = document.getElementById('formCrearClase');
+    const formInscribir = document.getElementById('formInscribir');
 
-  // ✅ Permite crear talleres al hacer clic en un día vacío
-dateClick: function(info) {
-  const formCrear = document.getElementById('formCrearClase');
-  const modalCrearClase = document.getElementById('modalCrearClase');
-  const modalTitle = modalCrearClase?.querySelector('.modal-title');
-  const btnSubmit = modalCrearClase?.querySelector('button[type="submit"]');
+    const btnCrear = document.getElementById("btnAbrirCrearManual");
 
-  if (!formCrear) return console.error('❌ No se encontró el formulario del modal de creación.');
+    const btnEditarClase = document.getElementById('btnEditarClase');
+    const btnEliminarClase = document.getElementById('btnEliminarClase');
+    const btnInscribirme = document.getElementById('btnInscribirme');
+    const btnCancelarIns = document.getElementById('btnCancelarIns');
 
-  // Reset y asignación de valores
-  formCrear.reset();
-  document.getElementById('crearFecha').value = info.dateStr;
-  delete formCrear.dataset.editarId;
-
-  // Solo modifica si existen
-  if (modalTitle) modalTitle.textContent = 'Crear Taller';
-  if (btnSubmit) btnSubmit.textContent = 'Crear';
-
-  modalCrear.show();
-},
-
-
-  // ✅ Abre detalle del taller existente
-  eventClick: async (info) => {
-    const id = info.event.extendedProps?.id_taller || info.event.id;
-    const r = await fetch(`{% url 'api_detalle_taller' 0 %}`.replace('0', id));
-    const data = await r.json();
-    if (!data.ok) return;
-    const c = data.taller;
-    actualizarDetalleTaller(c);
-    document.getElementById('formInscribir').dataset.claseId = c.id;
-    modalDetalle.show();
-  }
-});
-
-calendar.render();
-
-
-  // === Crear o Editar taller ===
-  document.getElementById('formCrearClase').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const idEditar = e.target.dataset.editarId;
-    const url = idEditar
-      ? `/talleres/api/${idEditar}/editar/`
-      : "{% url 'api_crear_taller' %}";
-
-
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        body: formData,
-        headers: { 'X-CSRFToken': CSRF }
-      });
-      const data = await res.json();
-      if (data.ok) {
-        Swal.fire({
-          icon: 'success',
-          title: idEditar ? '✅ Taller actualizado correctamente' : '✅ Taller creado correctamente',
-          timer: 1500,
-          showConfirmButton: false
+    /* ==========================
+       BOTÓN CREAR MANUAL
+    ========================== */
+    if (btnCrear) {
+        btnCrear.addEventListener("click", () => {
+            formCrear.reset();
+            delete formCrear.dataset.editarId;
+            document.getElementById("tituloCrearEditar").textContent = "Crear Taller";
+            modalCrear.show();
         });
-        modalCrear.hide();
-        delete e.target.dataset.editarId;
-        setTimeout(() => calendar.refetchEvents(), 800);
-      } else {
-        Swal.fire('❌ Error', data.msg || 'No se pudo guardar el taller', 'error');
-      }
-    } catch (err) {
-      Swal.fire('❌ Error inesperado', err.message, 'error');
-    }
-  });
-
-  // === Inscribir socio ===
-  document.getElementById('formInscribir').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const claseId = e.target.dataset.claseId;
-    const formData = new FormData(e.target);
-    try {
-      const res = await fetch(`/talleres/api/${claseId}/inscribir/`, {
-        method: 'POST',
-        body: formData,
-        headers: { 'X-CSRFToken': CSRF }
-      });
-      const data = await res.json();
-      if (data.ok) {
-        Swal.fire('✅ Socio inscrito correctamente', '', 'success');
-        const r = await fetch(`/talleres/api/${claseId}/`);
-        const detalle = await r.json();
-        actualizarDetalleTaller(detalle.taller);
-      } else {
-        Swal.fire('❌ Error', data.msg || 'No se pudo inscribir al socio', 'error');
-      }
-    } catch (err) {
-      Swal.fire('❌ Error inesperado', err.message, 'error');
-    }
-  });
-
-// === EDITAR TALLER ===
-document.getElementById('btnEditarClase').addEventListener('click', async () => {
-  const id = document.getElementById('formInscribir').dataset.claseId;
-  if (!id) return;
-
-  try {
-    const r = await fetch(`/talleres/api/${id}/`);
-
-    const data = await r.json();
-    if (!data.ok) return Swal.fire('❌ Error', 'No se pudo cargar el taller', 'error');
-
-    const t = data.taller;
-
-    // Asegura que todos los elementos existen antes de modificar
-    const nombre = document.querySelector('[name=nombre]');
-    const cupos = document.querySelector('[name=cupos]');
-    const prof = document.querySelector('[name=profesor_id]');
-    const fecha = document.getElementById('crearFecha');
-    const horaIni = document.getElementById('crearHoraIni');
-    const horaFin = document.getElementById('crearHoraFin');
-    const modalTitle = document.querySelector('#modalCrearClase .modal-title');
-    const btnSubmit = document.querySelector('#modalCrearClase button[type="submit"]');
-
-    if (!nombre || !cupos || !prof || !fecha || !horaIni || !horaFin) {
-      console.error('❌ Error: no se encontraron campos del formulario.');
-      return;
     }
 
-    nombre.value = t.nombre;
-    cupos.value = t.cupos;
-    prof.value = t.profesor_id;
-    fecha.value = t.fecha;
-    horaIni.value = t.hora_inicio;
-    horaFin.value = t.hora_fin;
+    /* ==========================
+       LLENAR SELECT PROFESORES + BLOQUEO PROFESOR
+    ========================== */
+    const selectProfesor = document.getElementById('selectProfesor');
 
-    document.getElementById('formCrearClase').dataset.editarId = id;
-    if (modalTitle) modalTitle.textContent = 'Editar Taller';
-    if (btnSubmit) btnSubmit.textContent = 'Guardar Cambios';
+    if (selectProfesor) {
+        selectProfesor.innerHTML = "";
+        PROFESORES.forEach(p => {
+            selectProfesor.innerHTML += `<option value="${p.id}">${p.nombre} ${p.apellido ?? ""}</option>`;
+        });
+    }
 
-    modalDetalle.hide();
-    setTimeout(() => modalCrear.show(), 300);
-  } catch (err) {
-    Swal.fire('❌ Error inesperado', err.message, 'error');
-  }
-});
+    if (USER_ROL === "profesor") {
+        selectProfesor.innerHTML = `<option value="{{ request.user.id }}">{{ request.user.nombre }} {{ request.user.apellido }}</option>`;
+        selectProfesor.disabled = true;
+    }
 
+    /* ==========================
+       CALENDARIO
+    ========================== */
+    const calendar = new FullCalendar.Calendar(document.getElementById("calendar"), {
+        initialView: "dayGridMonth",
+        locale: "es",
+        firstDay: 1,
+        events: "{% url 'eventos_talleres_json' %}",
 
+        dateClick(info) {
+            if (USER_ROL === "socio") return;
+            formCrear.reset();
+            document.getElementById('crearFecha').value = info.dateStr;
+            modalCrear.show();
+        },
 
-  // === ELIMINAR TALLER ===
-  document.getElementById('btnEliminarClase').addEventListener('click', async () => {
-    const id = document.getElementById('formInscribir').dataset.claseId;
-    if (!id) return;
-    const confirm = await Swal.fire({
-      title: '¿Eliminar taller?',
-      text: 'Se eliminarán también todas las inscripciones asociadas.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#6c757d',
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
+        eventClick: async function (info) {
+            const res = await fetch(`/talleres/api/${info.event.id}/`);
+            const data = await res.json();
+            if (!data.ok) return;
+
+            actualizarDetalle(data.taller);
+            modalDetalle.show();
+        }
     });
-    if (confirm.isConfirmed) {
-      try {
-        const res = await fetch(`/talleres/api/${id}/eliminar/`, {
-          method: 'POST',
-          headers: { 'X-CSRFToken': CSRF }
+
+    calendar.render();
+
+    /* ==========================
+       EDITAR TALLER
+    ========================== */
+    function editarTaller(t) {
+        formCrear.dataset.editarId = t.id;
+        document.getElementById("tituloCrearEditar").textContent = "Editar Taller";
+
+        formCrear.nombre.value = t.nombre;
+        formCrear.cupos.value = t.cupos;
+        formCrear.fecha.value = t.fecha;
+        formCrear.hora_inicio.value = t.hora_inicio;
+        formCrear.hora_fin.value = t.hora_fin;
+        formCrear.profesor_id.value = t.profesor_id;
+
+        modalCrear.show();
+    }
+
+    if (btnEditarClase) {
+        btnEditarClase.onclick = () => {
+            modalDetalle.hide();
+            editarTaller(window.tallerActual);
+        };
+    }
+
+    /* ==========================
+       ELIMINAR TALLER
+    ========================== */
+    if (btnEliminarClase) {
+        btnEliminarClase.onclick = async () => {
+
+            const id = window.tallerActual.id;
+
+            const confirm = await Swal.fire({
+                title: "¿Eliminar taller?",
+                icon: "warning",
+                showCancelButton: true
+            });
+
+            if (!confirm.isConfirmed) return;
+
+            const res = await fetch(`/talleres/api/${id}/eliminar/`, {
+                method: "POST",
+                headers: { "X-CSRFToken": CSRF }
+            });
+
+            const data = await res.json();
+            if (data.ok) {
+                Swal.fire("Eliminado", "", "success");
+                modalDetalle.hide();
+                calendar.refetchEvents();
+            }
+        };
+    }
+
+    /* ==========================
+       GUARDAR (CREAR O EDITAR)
+    ========================== */
+    formCrear.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(formCrear);
+        const idEditar = formCrear.dataset.editarId;
+
+        const url = idEditar
+            ? `/talleres/api/${idEditar}/editar/`
+            : "{% url 'api_crear_taller' %}";
+
+        const res = await fetch(url, {
+            method: "POST",
+            body: formData,
+            headers: { "X-CSRFToken": CSRF }
         });
+
         const data = await res.json();
         if (data.ok) {
-          Swal.fire('Eliminado', data.msg || 'Taller eliminado correctamente', 'success');
-          modalDetalle.hide();
-          setTimeout(() => calendar.refetchEvents(), 800);
-        } else {
-          Swal.fire('Error', data.msg || 'No se pudo eliminar el taller', 'error');
+            modalCrear.hide();
+            calendar.refetchEvents();
         }
-      } catch (err) {
-        Swal.fire('Error inesperado', err.message, 'error');
-      }
-    }
-  });
-
-  // === Actualizar detalle de taller ===
-  function actualizarDetalleTaller(c) {
-    document.getElementById('detalleTitulo').textContent = c.nombre;
-    document.getElementById('detalleProfesor').textContent = c.profesor;
-    document.getElementById('detalleFecha').textContent = c.fecha;
-    document.getElementById('detalleHorario').textContent = `${c.hora_inicio} - ${c.hora_fin}`;
-    document.getElementById('detalleCupos').textContent = c.cupos;
-    document.getElementById('detalleInsc').textContent = c.inscritos;
-    const tbody = document.querySelector('#tablaInscritos tbody');
-    tbody.innerHTML = '';
-    c.alumnos.forEach(a => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${a.socio__nombre} ${a.socio__apellido_paterno || ''}</td>
-        <td>
-          <select class="form-select form-select-sm sel-asist" data-id="${a.id}">
-            <option value="pendiente" ${a.asistencia==='pendiente'?'selected':''}>Pendiente</option>
-            <option value="presente" ${a.asistencia==='presente'?'selected':''}>Presente</option>
-            <option value="ausente" ${a.asistencia==='ausente'?'selected':''}>Ausente</option>
-          </select>
-        </td>
-        <td><button class="btn btn-sm btn-outline-danger btn-del-insc" data-id="${a.id}">Eliminar</button></td>
-      `;
-      tbody.appendChild(tr);
     });
-  }
 
-  // === Eliminar inscripción de socio ===
-// === Eliminar inscripción de socio ===
-  document.addEventListener('click', async (e) => {
-    if (e.target.classList.contains('btn-del-insc')) {
-      const id = e.target.dataset.id;
-      const claseId = document.getElementById('formInscribir').dataset.claseId;
-      const confirm = await Swal.fire({
-        title: '¿Eliminar inscripción?',
-        text: 'Esta acción no se puede deshacer.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#d33',
-        cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar'
-      });
-      if (confirm.isConfirmed) {
-        try {
-          const res = await fetch(`/talleres/api/inscripciones/${id}/eliminar/`, {
-            method: 'POST',
-            headers: { 'X-CSRFToken': CSRF }
-          });
-          const data = await res.json();
-          if (data.ok) {
-            Swal.fire('Eliminado', data.msg || 'Inscripción eliminada correctamente', 'success');
-            // 🔧 Aquí estaba el error: antes decía /reservas/api/...
-            const r = await fetch(`/talleres/api/${claseId}/`);
-            const detalle = await r.json();
-            actualizarDetalleTaller(detalle.taller);
-          } else {
-            Swal.fire('Error', data.msg || 'No se pudo eliminar la inscripción', 'error');
-          }
-        } catch (err) {
-          Swal.fire('Error inesperado', err.message, 'error');
-        }
-      }
+    /* ==========================
+       LLENAR SELECT SOCIOS
+    ========================== */
+    const selectSocio = document.getElementById('selectSocio');
+
+    if (selectSocio && USER_ROL !== "socio") {
+        selectSocio.innerHTML = "";
+        SOCIOS.forEach(s => {
+            selectSocio.innerHTML += `
+                <option value="${s.id}">
+                    ${s.nombre} ${s.apellido_paterno ?? ""}
+                </option>`;
+        });
     }
-  });
+
+    /* ==========================
+       INSCRIBIR SOCIO (ADMIN/PROFESOR)
+    ========================== */
+    if (formInscribir) {
+
+        formInscribir.addEventListener("submit", async function(e) {
+            e.preventDefault();
+
+            const socioId = formInscribir.socio_id.value;
+            const tallerId = window.tallerActual.id;
+
+            const formData = new FormData();
+            formData.append("socio_id", socioId);
+
+            const res = await fetch(`/talleres/api/${tallerId}/inscribir/`, {
+                method: "POST",
+                headers: { "X-CSRFToken": CSRF },
+                body: formData
+            });
+
+            const data = await res.json();
+
+            if (data.ok) {
+                Swal.fire("Socio inscrito", "", "success");
+                actualizarDetalle(data.taller);
+                cargarTablaInscritos(data.taller.alumnos);
+                calendar.refetchEvents();
+            } else {
+                Swal.fire("Error", data.msg ?? "No se pudo inscribir", "error");
+            }
+        });
+    }
+
+    /* ==========================
+       INSCRIPCIÓN SOCIO A SÍ MISMO
+    ========================== */
+    if (btnInscribirme) {
+
+        btnInscribirme.addEventListener("click", async () => {
+
+            const tallerId = window.tallerActual.id;
+
+            const res = await fetch(`/talleres/api/${tallerId}/inscribir/`, {
+                method: "POST",
+                headers: { "X-CSRFToken": CSRF }
+            });
+
+            const data = await res.json();
+
+            if (data.ok) {
+                Swal.fire("Inscrito", "", "success");
+                actualizarDetalle(data.taller);
+                cargarTablaInscritos(data.taller.alumnos);
+                calendar.refetchEvents();
+            } else {
+                Swal.fire("Error", data.msg ?? "No se pudo inscribir", "error");
+            }
+        });
+    }
+
+    /* ==========================
+       CANCELAR INSCRIPCIÓN (SOCIO)
+    ========================== */
+    if (btnCancelarIns) {
+
+        btnCancelarIns.addEventListener("click", async function() {
+
+            const inscId = this.dataset.inscId;
+
+            const res = await fetch(`/talleres/api/inscripciones/${inscId}/eliminar/`, {
+
+                method: "POST",
+                headers: { "X-CSRFToken": CSRF }
+            });
+
+            const data = await res.json();
+
+            if (data.ok) {
+                Swal.fire("Inscripción cancelada", "", "success");
+                actualizarDetalle(data.taller);
+                cargarTablaInscritos(data.taller.alumnos);
+                calendar.refetchEvents();
+            } else {
+                Swal.fire("Error", data.msg ?? "No se pudo cancelar", "error");
+            }
+        });
+    }
+
+    /* ==========================
+       CARGAR TABLA INSCRITOS
+    ========================== */
+    function cargarTablaInscritos(lista) {
+        const tbody = document.querySelector("#tablaInscritos tbody");
+        tbody.innerHTML = "";
+
+        lista.forEach(i => {
+            const puede = window.tallerActual.puede_gestionar;
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${i.socio__nombre} ${i.socio__apellido_paterno ?? ""}</td>
+                    <td>${i.asistencia === "presente" ? "✔" : "—"}</td>
+                    <td>
+                        ${puede
+                            ? `<button class="btn btn-danger btn-sm" onclick="eliminarInscripcion(${i.id})">Quitar</button>`
+                            : `<span class="text-muted">Sin permisos</span>`
+                        }
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    /* ==========================
+       ELIMINAR INSCRIPCIÓN (ADMIN/PROFESOR)
+    ========================== */
+    async function eliminarInscripcion(inscripcionId) {
+
+        const confirm = await Swal.fire({
+            title: "¿Quitar inscripción?",
+            icon: "warning",
+            showCancelButton: true
+        });
+
+        if (!confirm.isConfirmed) return;
+
+        const res = await fetch(`/talleres/api/inscripciones/${inscripcionId}/eliminar/`, {
+            method: "POST",
+            headers: { "X-CSRFToken": CSRF }
+        });
+
+        const data = await res.json();
+
+        if (data.ok) {
+            Swal.fire("Eliminado", "", "success");
+            actualizarDetalle(data.taller);
+            cargarTablaInscritos(data.taller.alumnos);
+            calendar.refetchEvents();
+        }
+    }
+
+    // lo dejamos global para usarlo desde el onclick del botón
+    window.eliminarInscripcion = eliminarInscripcion;
+
+    /* ==========================
+       DETALLE DEL TALLER
+    ========================== */
+    function actualizarDetalle(t) {
+
+    window.tallerActual = t;
+
+    document.getElementById('detalleTitulo').textContent = t.nombre;
+    document.getElementById('detalleProfesor').textContent = t.profesor;
+    document.getElementById('detalleFecha').textContent = t.fecha;
+    document.getElementById('detalleHorario').textContent = `${t.hora_inicio} - ${t.hora_fin}`;
+    document.getElementById('detalleCupos').textContent =
+        `${t.inscritos} / ${t.cupos} (disp: ${t.cupos_disponibles})`;
+
+    cargarTablaInscritos(t.alumnos);
+
+    /* ============================
+       BOTONES PARA ADMIN/PROF
+    ============================ */
+    if (btnEditarClase && btnEliminarClase) {
+        if (t.puede_gestionar && USER_ROL !== "socio") {
+            btnEditarClase.classList.remove("d-none");
+            btnEliminarClase.classList.remove("d-none");
+        } else {
+            btnEditarClase.classList.add("d-none");
+            btnEliminarClase.classList.add("d-none");
+        }
+    }
+
+    /* ============================
+       BOTONES PARA SOCIO
+    ============================ */
+    if (USER_ROL === "socio" && btnInscribirme && btnCancelarIns) {
+
+        if (t.mi_inscripcion_id) {
+            btnInscribirme.classList.add("d-none");
+            btnCancelarIns.classList.remove("d-none");
+            btnCancelarIns.dataset.inscId = t.mi_inscripcion_id;
+        } else {
+            btnInscribirme.classList.remove("d-none");
+            btnCancelarIns.classList.add("d-none");
+        }
+    }
+}
 
 
 });
 </script>
+
 {% endblock %}

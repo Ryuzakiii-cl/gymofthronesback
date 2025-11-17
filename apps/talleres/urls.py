@@ -10,26 +10,20 @@ urlpatterns = [
     path('editar/<int:taller_id>/', views.taller_form, name='taller_editar'),
     path('eliminar/<int:taller_id>/', views.taller_eliminar, name='taller_eliminar'),
 
-    # ============================================================
-    # 👥 INSCRIPCIONES Y PROFESORES
-    # ============================================================
-    path('inscribir/<int:taller_id>/', views.inscribir_socio_taller, name='inscribir_socio_taller'),
-    path('profesor/', views.talleres_profesor, name='talleres_profesor'),
 
     # ============================================================
     # ⚙️ API AJAX - TALLERES
     # ============================================================
-    path('api/', views.api_talleres, name='api_talleres'),
     path('api/crear/', views.api_crear_taller, name='api_crear_taller'),
     path('api/<int:taller_id>/', views.api_detalle_taller, name='api_detalle_taller'),
     path('api/<int:taller_id>/editar/', views.api_editar_taller, name='api_editar_taller'),
     path('api/<int:taller_id>/eliminar/', views.api_eliminar_taller, name='api_eliminar_taller'),
-    
+
     # ============================================================
-    # ⚙️ API AJAX - INSCRIPCIONES A TALLERES
+    # ⚙️ API AJAX - INSCRIPCIONES
     # ============================================================
     path('api/<int:taller_id>/inscribir/', views.api_inscribir_socio, name='api_inscribir_taller'),
     path('api/inscripciones/<int:insc_id>/asistencia/', views.api_cambiar_asistencia, name='api_cambiar_asistencia'),
     path('api/inscripciones/<int:insc_id>/eliminar/', views.api_eliminar_inscripcion, name='api_eliminar_inscripcion'),
-
+    
 ]

@@ -67,7 +67,8 @@
         <li><a href="{% url 'dashboard_socio' %}"><i class="ph ph-house"></i><span>inicio</span></a></li>
         <li><a href="{% url 'pagos_socio' %}"><i class="ph ph-credit-card"></i><span>Pagos</span></a></li>
         <li><a href="{% url 'calendario_canchas' %}"><i class="ph ph-calendar"></i><span>Mis Reservas</span></a></li>
-        <li><a href=""><i class="ph ph-person-simple-walk"></i><span>Mis Talleres</span></a></li>
+        <li><a href="{% url 'calendario_talleres' %}"><i class="ph ph-person-simple-walk"></i><span>Mis Talleres</span></a></li>
+
         <li><a href="{% url 'mis_rutinas_socio' %}"><i class="ph ph-barbell"></i><span>Mis Rutinas</span></a></li>
       {% endif %}
     </ul>

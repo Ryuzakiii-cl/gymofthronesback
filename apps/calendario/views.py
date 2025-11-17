@@ -42,15 +42,25 @@ def calendario_canchas(request):
 #   CALENDARIO TALLERES
 # ============================
 
+# ============================
+#   CALENDARIO TALLERES
+# ============================
+
 @login_required
-@user_passes_test(es_admin_superadmin_profesor)
+@user_passes_test(es_admin_superadmin_profesor_socio)  # 👈 ahora también puede entrar el socio
 def calendario_talleres(request):
-    profesores = list(Usuario.objects.filter(rol='profesor').values('id', 'nombre', 'apellido'))
-    socios = list(Socio.objects.filter(estado=True).values('id', 'nombre', 'apellido_paterno'))
+    profesores = list(
+        Usuario.objects.filter(rol='profesor').values('id', 'nombre', 'apellido')
+    )
+    socios = list(
+        Socio.objects.filter(estado=True).values('id', 'nombre', 'apellido_paterno')
+    )
+
     return render(request, 'calendario/calendario_talleres.html', {
         'profesores': json.dumps(profesores, cls=DjangoJSONEncoder),
         'socios': json.dumps(socios, cls=DjangoJSONEncoder),
     })
+
 
 
 # ============================
