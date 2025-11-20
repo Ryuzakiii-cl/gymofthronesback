@@ -103,16 +103,18 @@ def editar_rutina(request, rutina_id):
     rutina = get_object_or_404(RutinaBase, id=rutina_id)
 
     if request.method == 'POST':
-        rutina.titulo = request.POST.get('titulo')
-        rutina.descripcion = request.POST.get('descripcion')
-        rutina.objetivo = request.POST.get('objetivo')
-        rutina.imc_min = request.POST.get('imc_min')
-        rutina.imc_max = request.POST.get('imc_max')
-        rutina.contenido = request.POST.get('contenido')
-        rutina.save()
+        form = RutinaBaseForm(request.POST, instance=rutina)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Rutina modificada correctamente.")
+            return redirect('lista_rutinas')
+    else:
+        form = RutinaBaseForm(instance=rutina)
 
-        messages.success(request, "Rutina modificada correctamente.")
-        return redirect('lista_rutinas')
+    return render(request, 'rutinas/editar_rutina.html', {
+        'form': form,
+        'rutina': rutina,
+    })
 
     return render(request, 'rutinas/editar_rutina.html', {'rutina': rutina})
 

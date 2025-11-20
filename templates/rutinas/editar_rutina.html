@@ -1,16 +1,90 @@
 {% extends 'core/base_dashboard.html' %}
 {% load static %}
 
+{% block title %}Editar Rutina{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
-  <h3 class="fw-bold mb-4">Editar Plantilla</h3>
+  <h3 class="fw-bold mb-4">
+    <img src="{% static 'img/planes.png' %}" alt="icono"> Editar Rutina
+  </h3>
 
-  <form method="POST" class="card p-4 shadow-sm">
+  <form method="POST" class="card p-4 shadow-sm" id="editarForm">
     {% csrf_token %}
-    {{ form.as_p }}
 
-    <button class="btn btn-dark text-warning fw-bold">Guardar cambios</button>
-    <a href="{% url 'lista_rutinas' %}" class="btn btn-secondary">Cancelar</a>
+    <!-- Título -->
+    <div class="mb-3">
+      <label class="form-label">Título</label>
+      <input type="text" name="titulo" class="form-control"
+             value="{{ form.instance.titulo }}" required>
+    </div>
+
+    <!-- Descripción -->
+    <div class="mb-3">
+      <label class="form-label">Descripción</label>
+      <textarea name="descripcion" class="form-control" rows="3" required>{{ form.instance.descripcion }}</textarea>
+    </div>
+
+    <!-- Objetivo -->
+    <div class="mb-3">
+      <label class="form-label">Objetivo</label>
+      <select name="objetivo" class="form-select">
+        {% for value, label in form.fields.objetivo.choices %}
+          <option value="{{ value }}" {% if value == form.instance.objetivo %}selected{% endif %}>
+            {{ label }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- IMC -->
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label class="form-label">IMC mínimo</label>
+        <input type="number" step="0.1" name="imc_min" class="form-control"
+       value="{{ rutina.imc_min }}" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">IMC máximo</label>
+        <input type="number" step="0.1" name="imc_max" class="form-control"
+       value="{{ rutina.imc_max }}" required>
+      </div>
+    </div>
+
+    <!-- Contenido JSON -->
+    <div class="mb-3">
+      <label class="form-label">Contenido (JSON)</label>
+      <textarea id="contenidoJson" name="contenido" class="form-control"
+                rows="14" required>{{ form.instance.contenido }}</textarea>
+      <button type="button" class="btn btn-outline-dark mt-2" id="btnPrettify">Formatear JSON</button>
+    </div>
+
+    <!-- Botones -->
+    <div class="mt-3 text-end">
+      <button class="btn btn-dark text-warning fw-bold">Guardar cambios</button>
+      <a href="{% url 'lista_rutinas' %}" class="btn btn-secondary">Cancelar</a>
+    </div>
+
   </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+// === PRETTIFY JSON ===
+document.getElementById("btnPrettify").addEventListener("click", () => {
+    const textarea = document.getElementById("contenidoJson");
+
+    try {
+        const obj = JSON.parse(textarea.value);
+        textarea.value = JSON.stringify(obj, null, 4);
+        Swal.fire("Formato OK", "El JSON se ordenó correctamente.", "success");
+    } catch (e) {
+        Swal.fire("Error en JSON", "Revisa la sintaxis. No se puede formatear.", "error");
+    }
+});
+</script>
+
 {% endblock %}

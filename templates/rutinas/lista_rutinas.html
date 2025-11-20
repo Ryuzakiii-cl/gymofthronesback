@@ -43,17 +43,19 @@
           <td>{{ rutina.descripcion|truncatewords:10 }}</td>
 
           <td>
-          <a href="{% url 'editar_rutina' rutina.id %}" 
-            class="btn btn-sm btn-outline-dark me-2" title="Editar">
-              ✏️
-          </a>
+              <a href="{% url 'editar_rutina' rutina.id %}" 
+                class="btn btn-sm btn-outline-dark me-2" title="Editar">
+                  ✏️
+              </a>
 
-          <a href="{% url 'eliminar_rutina' rutina.id %}" 
-            class="btn btn-sm btn-outline-danger eliminar-rutina" 
-            title="Eliminar">
-              🗑️
-          </a>
-      </td>
+              <a href="{% url 'eliminar_rutina' rutina.id %}" 
+                class="btn btn-sm btn-outline-danger eliminar-rutina" 
+                title="Eliminar">
+                  🗑️
+              </a>
+          </td>
+
+
 
         </tr>
         {% empty %}
@@ -71,5 +73,5 @@
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="{% static 'js/rutina.js' %}"></script>
+<script src="{% static 'js/rutinas/rutinas.js' %}"></script>
 {% endblock %}

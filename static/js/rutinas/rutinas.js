@@ -1,48 +1,40 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const hasSwal = typeof window.Swal !== "undefined";
 
-    // =====================================================
-    // 🗑️ CONFIRMAR ELIMINACIÓN DE RUTINA
-    // =====================================================
-    const botones = document.querySelectorAll(".eliminar-rutina");
-
-    botones.forEach(boton => {
-        boton.addEventListener("click", function (e) {
-            e.preventDefault();
-            const url = this.getAttribute("href");
-
-            Swal.fire({
-                title: "¿Estás seguro?",
-                text: "Esta rutina será eliminada permanentemente.",
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonColor: "#d33",
-                cancelButtonColor: "#6c757d",
-                confirmButtonText: "Eliminar",
-                cancelButtonText: "Cancelar"
-            }).then(result => {
-                if (result.isConfirmed) {
-                    window.location.href = url;
-                }
-            });
-        });
-    });
-
-
-    // =====================================================
-    // ✅ SWEETALERT PARA RUTINA MODIFICADA / CREADA
-    // (USA MENSAJES DE DJANGO AUTOMÁTICAMENTE)
-    // =====================================================
     const mensajeElemento = document.getElementById("mensaje-rutina");
-    if (mensajeElemento) {
-        const mensaje = mensajeElemento.dataset.mensaje;
-
+    if (hasSwal && mensajeElemento) {
         Swal.fire({
-            icon: 'success',
-            title: mensaje,
-            confirmButtonColor: '#111',
+            icon: "success",
+            title: mensajeElemento.dataset.mensaje,
             timer: 1700,
-            showConfirmButton: false
+            showConfirmButton: false,
+            confirmButtonColor: "#212529",
         });
     }
 
+    if (hasSwal) {
+        document.querySelectorAll(".eliminar-rutina").forEach((boton) => {
+            boton.addEventListener("click", (e) => {
+                e.preventDefault();
+                const url = boton.getAttribute("href");
+
+                Swal.fire({
+                    title: "¿Eliminar rutina?",
+                    text: "Esta acción no se puede deshacer.",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#d33",
+                    cancelButtonColor: "#6c757d",
+                    confirmButtonText: "Sí, eliminar",
+                    cancelButtonText: "Cancelar",
+                    reverseButtons: true,
+                    customClass: { popup: "rounded-4 shadow-lg" },
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = url;
+                    }
+                });
+            });
+        });
+    }
 });
