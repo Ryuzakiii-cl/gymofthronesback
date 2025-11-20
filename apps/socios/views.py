@@ -102,7 +102,8 @@ def crear_socio(request):
 
     return render(request, 'socios/crear_socio.html', {
         'planes': planes,
-        'profesores': profesores
+        'profesores': profesores,
+        'objetivos': Socio.objetivos_choices
     })
 
 

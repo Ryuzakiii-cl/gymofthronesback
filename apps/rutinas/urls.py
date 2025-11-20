@@ -8,6 +8,9 @@ urlpatterns = [
 
     # 📋 LISTA DE RUTINAS (vista temporal)
     path('profesor/rutinas/', views.lista_rutinas, name='lista_rutinas'),
+    path('plantillas/<int:id>/editar/', views.editar_rutina, name='editar_rutina'),
+    path('plantillas/<int:rutina_id>/eliminar/', views.eliminar_rutina, name='eliminar_rutina'),
+
 
     # ➕ placeholders para evitar errores
     path('profesor/rutinas/crear/', views.crear_rutina, name='crear_rutina'),

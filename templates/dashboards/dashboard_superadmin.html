@@ -11,33 +11,47 @@
     Panel General del Sistema
   </h3>
 
-  <!-- Resumen general -->
-  <div class="row text-center mb-4">
-    <div class="col-md-3 mb-3">
-      <div class="card shadow-sm border-0 bg-light p-3">
-        <h4 class="fw-bold text-primary">{{ total_admins }}</h4>
-        <p>Administradores</p>
+
+
+  <div class="card shadow-sm mb-4">
+  <div class="card-header bg-warning text-black">
+    <h5 class="mb-0">Usuarios del sistema</h5>
+  </div>
+
+  <div class="card-body">
+    <!-- Resumen general -->
+    <div class="row text-center mb-4">
+      <div class="col-md-3 mb-3">
+        <div class="card shadow-sm border-0 bg-light p-3">
+          <h4 class="fw-bold text-primary">{{ total_admins }}</h4>
+          <p>Administradores</p>
+        </div>
       </div>
-    </div>
-    <div class="col-md-3 mb-3">
-      <div class="card shadow-sm border-0 bg-light p-3">
-        <h4 class="fw-bold text-success">{{ total_profesores }}</h4>
-        <p>Profesores</p>
+
+      <div class="col-md-3 mb-3">
+        <div class="card shadow-sm border-0 bg-light p-3">
+          <h4 class="fw-bold text-success">{{ total_profesores }}</h4>
+          <p>Profesores</p>
+        </div>
       </div>
-    </div>
-    <div class="col-md-3 mb-3">
-      <div class="card shadow-sm border-0 bg-light p-3">
-        <h4 class="fw-bold text-warning">{{ total_socios }}</h4>
-        <p>Socios Registrados</p>
+
+      <div class="col-md-3 mb-3">
+        <div class="card shadow-sm border-0 bg-light p-3">
+          <h4 class="fw-bold text-warning">{{ total_socios }}</h4>
+          <p>Socios Registrados</p>
+        </div>
       </div>
-    </div>
-    <div class="col-md-3 mb-3">
-      <div class="card shadow-sm border-0 bg-light p-3">
-        <h4 class="fw-bold text-info">{{ rutinas_totales }}</h4>
-        <p>Rutinas Totales</p>
+
+      <div class="col-md-3 mb-3">
+        <div class="card shadow-sm border-0 bg-light p-3">
+          <h4 class="fw-bold text-info">{{ rutinas_totales }}</h4>
+          <p>Rutinas Totales</p>
+        </div>
       </div>
     </div>
   </div>
+</div>
+
 
   <!-- Estado de socios -->
   <div class="card shadow-sm p-4 mb-4">

@@ -1,4 +1,4 @@
 184416999	superadmin		 
 187459683	admin		 
-201536248	profesor	 
-216596352   alumno
+195863526	profesor	 
+241234569   alumno

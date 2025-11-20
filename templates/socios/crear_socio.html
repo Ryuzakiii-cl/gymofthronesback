@@ -60,7 +60,7 @@
       <div class="col-md-4">
         <label class="form-label">Objetivo</label>
         <select name="objetivo" class="form-select">
-          {% for valor, texto in socio.objetivos_choices %}
+          {% for valor, texto in objetivos %}
             <option value="{{ valor }}">{{ texto }}</option>
           {% endfor %}
         </select>

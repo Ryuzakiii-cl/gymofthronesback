@@ -207,7 +207,7 @@ def crear_usuario(request):
         nombre = request.POST['nombre']
         apellido = request.POST['apellido']
         correo = request.POST['correo']
-        rol = request.POST['rol']
+        rol = request.POST['rol'].strip().lower()
         especialidad = request.POST.get('especialidad')
         password = rut
 
@@ -226,7 +226,7 @@ def crear_usuario(request):
         )
 
         # 🔹 Solo guardar especialidad si es profesor, si no => 'no_aplica'
-        if rol == 'Profesor':
+        if rol == 'profesor':
             user.especialidad = especialidad or None
         else:
             user.especialidad = 'no_aplica'

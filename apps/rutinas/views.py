@@ -4,6 +4,9 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from apps.socios.models import Socio
 from apps.rutinas.models import Rutina, RutinaBase
 from apps.core.utils import formatear_rut
+from django.utils import timezone
+from django import forms
+
 
 # =======================================================
 # 🧩 PERMISOS
@@ -58,7 +61,7 @@ def generar_rutina_automatica(request, socio_id):
     rutina = Rutina.objects.create(
         profesor=request.user,
         socio=socio,
-        titulo=plantilla.titulo,
+        titulo=f"{plantilla.titulo} - {timezone.now().strftime('%d/%m/%Y %H:%M:%S')}",
         descripcion=plantilla.descripcion,
         contenido=plantilla.contenido,
         imc_referencia=imc,
@@ -72,14 +75,60 @@ def generar_rutina_automatica(request, socio_id):
 
 
 # =======================================================
-# 📋 LISTA DE RUTINAS (profesor)
+# 📋 CRUD DE RUTINAS (profesor)
 # =======================================================
+
+
+
+
+class RutinaBaseForm(forms.ModelForm):
+    class Meta:
+        model = RutinaBase
+        fields = ['titulo', 'descripcion', 'objetivo', 'imc_min', 'imc_max', 'contenido']
+
+
+
+
 @login_required
 @user_passes_test(es_profesor)
 def lista_rutinas(request):
     """Lista todas las rutinas base disponibles (plantillas)"""
     rutinas = RutinaBase.objects.all().order_by('objetivo', 'imc_min')
     return render(request, 'rutinas/lista_rutinas.html', {'rutinas': rutinas})
+
+
+@login_required
+@user_passes_test(es_profesor)
+def editar_rutina(request, rutina_id):
+    rutina = get_object_or_404(RutinaBase, id=rutina_id)
+
+    if request.method == 'POST':
+        rutina.titulo = request.POST.get('titulo')
+        rutina.descripcion = request.POST.get('descripcion')
+        rutina.objetivo = request.POST.get('objetivo')
+        rutina.imc_min = request.POST.get('imc_min')
+        rutina.imc_max = request.POST.get('imc_max')
+        rutina.contenido = request.POST.get('contenido')
+        rutina.save()
+
+        messages.success(request, "Rutina modificada correctamente.")
+        return redirect('lista_rutinas')
+
+    return render(request, 'rutinas/editar_rutina.html', {'rutina': rutina})
+
+
+
+
+@login_required
+@user_passes_test(es_profesor)
+def eliminar_rutina(request, rutina_id):
+    rutina = get_object_or_404(RutinaBase, id=rutina_id)
+    titulo = rutina.titulo
+
+    rutina.delete()
+
+    messages.success(request, f"🗑️ La rutina «{titulo}» fue eliminada correctamente.")
+    return redirect('lista_rutinas')
 
 
 

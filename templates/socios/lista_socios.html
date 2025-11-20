@@ -86,7 +86,8 @@
             {% endif %}
           </td>
           <td>
-            <a href="{% url 'editar_socio' socio.id %}" class="btn btn-sm btn-outline-dark" title="Editar">
+            <a href="{% url 'editar_socio' socio.id %}" 
+                class="btn btn-sm btn-outline-dark" title="Editar">
               ✏️
             </a>
             <a href="{% url 'eliminar_socio' socio.id %}" class="btn btn-sm btn-outline-danger eliminar-socio" title="Eliminar">

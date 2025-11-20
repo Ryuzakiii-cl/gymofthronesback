@@ -26,11 +26,6 @@ class Socio(models.Model):
         ('bajar_grasa', 'Reducir grasa corporal'),
         ('mantener', 'Mantener condición física'),
         ('aumentar_fuerza', 'Aumentar fuerza'),
-        ('mejorar_resistencia', 'Mejorar resistencia / Cardio'),
-        ('mejorar_flexibilidad', 'Mejorar flexibilidad / Movilidad'),
-        ('rendimiento_deportivo', 'Mejorar rendimiento deportivo'),
-        ('salud_bienestar', 'Salud y bienestar / Reducir estrés'),
-        ('rehabilitacion', 'Rehabilitación / Recuperación de lesión'),
         ('tonificar', 'Tonificar / Definir'),
     ]
     objetivo = models.CharField(max_length=40, choices=objetivos_choices, default='mantener')
