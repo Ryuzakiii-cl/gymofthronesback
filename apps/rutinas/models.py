@@ -55,7 +55,9 @@ class Rutina(models.Model):
         carpeta = os.path.join(settings.MEDIA_ROOT, 'rutinas/pdf')
         os.makedirs(carpeta, exist_ok=True)
 
-        nombre_pdf = f"rutina_{self.socio.rut}_{self.fecha_asignacion.strftime('%Y%m%d_%H%M')}.pdf"
+        fecha_local = timezone.localtime(self.fecha_asignacion)
+        nombre_pdf = f"rutina_{self.socio.rut}_{fecha_local.strftime('%Y%m%d_%H%M')}.pdf"
+
         ruta_pdf = os.path.join(carpeta, nombre_pdf)
 
         doc = SimpleDocTemplate(ruta_pdf, pagesize=A4, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)

@@ -88,6 +88,41 @@ class RutinaBaseForm(forms.ModelForm):
 
 
 
+@login_required
+@user_passes_test(es_profesor)
+def crear_rutina(request):
+    import json
+
+    if request.method == "POST":
+        titulo = request.POST.get("titulo")
+        descripcion = request.POST.get("descripcion")
+        objetivo = request.POST.get("objetivo")
+        imc_min = request.POST.get("imc_min")
+        imc_max = request.POST.get("imc_max")
+        contenido_json = request.POST.get("contenido")  # viene armado desde JS
+
+        rutina = RutinaBase.objects.create(
+            titulo=titulo,
+            descripcion=descripcion,
+            objetivo=objetivo,
+            imc_min=imc_min,
+            imc_max=imc_max,
+            contenido=contenido_json
+        )
+
+        messages.success(request, "Rutina creada correctamente.")
+        return redirect('lista_rutinas')
+
+    # JSON vacío para el editor  
+    contenido_vacio = {}
+
+    return render(request, 'rutinas/crear_rutina.html', {
+        'rutina': None,
+        'RUTINA_INICIAL': json.dumps(contenido_vacio),
+        'ejercicios': []
+    })
+
+
 
 @login_required
 @user_passes_test(es_profesor)
@@ -102,19 +137,79 @@ def lista_rutinas(request):
 def editar_rutina(request, rutina_id):
     rutina = get_object_or_404(RutinaBase, id=rutina_id)
 
+    import json
+
+    # Convertir contenido JSON a diccionario Python
+    try:
+        contenido = json.loads(rutina.contenido)
+    except:
+        contenido = {}
+
+    # ---- APLANAR para mostrar en tabla ----
+    ejercicios_lista = []
+    for semana, dias in contenido.items():
+        numero_semana = int(semana.replace("semana", ""))
+
+        for dia, ejercicios in dias.items():
+            numero_dia = int(dia.replace("dia", ""))
+
+            for ej in ejercicios:
+                ejercicios_lista.append({
+                    "semana": numero_semana,
+                    "dia": numero_dia,
+                    "ejercicio": ej["ejercicio"],
+                    "series": ej["series"],
+                    "reps": ej["reps"],
+                    "descanso": ej["descanso"]
+                })
+
+    # ---- POST (GUARDAR) ----
     if request.method == 'POST':
-        form = RutinaBaseForm(request.POST, instance=rutina)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Rutina modificada correctamente.")
-            return redirect('lista_rutinas')
-    else:
-        form = RutinaBaseForm(instance=rutina)
+        rutina.titulo = request.POST.get('titulo')
+        rutina.descripcion = request.POST.get('descripcion')
+        rutina.objetivo = request.POST.get('objetivo')
+        rutina.imc_min = request.POST.get('imc_min')
+        rutina.imc_max = request.POST.get('imc_max')
+
+        # Recuperar todos los ejercicios del formulario
+        semanas = request.POST.getlist('semana[]')
+        dias = request.POST.getlist('dia[]')
+        ejercicios = request.POST.getlist('ejercicio[]')
+        series = request.POST.getlist('series[]')
+        reps = request.POST.getlist('reps[]')
+        descansos = request.POST.getlist('descanso[]')
+
+        nuevo_json = {}
+
+        for i in range(len(ejercicios)):
+            semana_key = f"semana{semanas[i]}"
+            dia_key = f"dia{dias[i]}"
+
+            if semana_key not in nuevo_json:
+                nuevo_json[semana_key] = {}
+
+            if dia_key not in nuevo_json[semana_key]:
+                nuevo_json[semana_key][dia_key] = []
+
+            nuevo_json[semana_key][dia_key].append({
+                "ejercicio": ejercicios[i],
+                "series": int(series[i]),
+                "reps": reps[i],
+                "descanso": descansos[i]
+            })
+
+        rutina.contenido = json.dumps(nuevo_json, indent=4, ensure_ascii=False)
+        rutina.save()
+
+        messages.success(request, "Rutina modificada correctamente.")
+        return redirect('lista_rutinas')
 
     return render(request, 'rutinas/editar_rutina.html', {
-        'form': form,
         'rutina': rutina,
+        'ejercicios': ejercicios_lista
     })
+
+
 
     return render(request, 'rutinas/editar_rutina.html', {'rutina': rutina})
 
@@ -134,14 +229,7 @@ def eliminar_rutina(request, rutina_id):
 
 
 
-# =======================================================
-# ➕ PLACEHOLDERS PARA EVITAR ERRORES DE NAVEGACIÓN
-# =======================================================
-@login_required
-@user_passes_test(es_profesor)
-def crear_rutina(request):
-    messages.info(request, "Funcionalidad de creación manual de rutinas aún no implementada.")
-    return redirect('lista_rutinas')
+
 
 
 @login_required
